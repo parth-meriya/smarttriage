@@ -1,0 +1,516 @@
+[
+  {
+    "model": "facilities.facility",
+    "pk": 1,
+    "fields": {
+      "name": "Northside Medical Center",
+      "code": "NMC-01",
+      "address": "100 Medical Center Way",
+      "city": "Metropolis",
+      "phone": "(555) 019-2831",
+      "is_active": true,
+      "created_at": "2026-09-06T00:00:00Z"
+    }
+  },
+  {
+    "model": "facilities.department",
+    "pk": 1,
+    "fields": {
+      "facility": 1,
+      "name": "Emergency Department",
+      "code": "ED",
+      "rooms": "A-01,A-02,A-04,B-03,B-07,C-02",
+      "is_active": true
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$720000$mock$hashed_placeholder_pw_for_dev",
+      "username": "dr_alex",
+      "first_name": "Alex",
+      "last_name": "Rivera",
+      "role": "Doctor",
+      "initials": "AR",
+      "department": "Emergency Department",
+      "license_number": "MD-84920",
+      "is_available": true,
+      "is_staff": true,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$720000$mock$hashed_placeholder_pw_for_dev",
+      "username": "jordan_lee",
+      "first_name": "Jordan",
+      "last_name": "Lee",
+      "role": "Nurse",
+      "initials": "JL",
+      "department": "Emergency Department",
+      "license_number": "RN-49210",
+      "is_available": true,
+      "is_staff": true,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$720000$mock$hashed_placeholder_pw_for_dev",
+      "username": "sam_morgan",
+      "first_name": "Sam",
+      "last_name": "Morgan",
+      "role": "Admin",
+      "initials": "SM",
+      "department": "Hospital Operations",
+      "is_available": true,
+      "is_staff": true,
+      "is_superuser": true,
+      "is_active": true,
+      "date_joined": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$720000$mock$hashed_placeholder_pw_for_dev",
+      "username": "jamie_smith",
+      "first_name": "Jamie",
+      "last_name": "Smith",
+      "role": "Patient",
+      "initials": "JS",
+      "phone_number": "(555) 392-1084",
+      "is_available": true,
+      "is_staff": false,
+      "is_superuser": false,
+      "is_active": true,
+      "date_joined": "2026-09-06T10:00:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 1,
+    "fields": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "initials": "JD",
+      "mrn": "ST-2048",
+      "age": 64,
+      "gender": "Male",
+      "registered_at": "2026-09-06T10:35:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 2,
+    "fields": {
+      "first_name": "Maria",
+      "last_name": "Santos",
+      "initials": "MS",
+      "mrn": "ST-2049",
+      "age": 41,
+      "gender": "Female",
+      "registered_at": "2026-09-06T10:20:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 3,
+    "fields": {
+      "first_name": "Samuel",
+      "last_name": "Lee",
+      "initials": "SL",
+      "mrn": "ST-2050",
+      "age": 29,
+      "gender": "Male",
+      "registered_at": "2026-09-06T10:12:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 4,
+    "fields": {
+      "first_name": "Eleanor",
+      "last_name": "Wright",
+      "initials": "EW",
+      "mrn": "ST-2051",
+      "age": 72,
+      "gender": "Female",
+      "registered_at": "2026-09-06T10:04:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 5,
+    "fields": {
+      "first_name": "David",
+      "last_name": "Kim",
+      "initials": "DK",
+      "mrn": "ST-2052",
+      "age": 36,
+      "gender": "Male",
+      "registered_at": "2026-09-06T09:56:00Z"
+    }
+  },
+  {
+    "model": "triage.patient",
+    "pk": 6,
+    "fields": {
+      "first_name": "Aisha",
+      "last_name": "Patel",
+      "initials": "AP",
+      "mrn": "ST-2053",
+      "age": 25,
+      "gender": "Female",
+      "registered_at": "2026-09-06T09:47:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 1,
+    "fields": {
+      "patient": 1,
+      "recorded_by": 2,
+      "spo2": 86,
+      "heart_rate": 112,
+      "respiratory_rate": 28,
+      "systolic_bp": 135,
+      "diastolic_bp": 85,
+      "temperature": "37.1",
+      "is_critical": true,
+      "recorded_at": "2026-09-06T10:39:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 2,
+    "fields": {
+      "patient": 2,
+      "recorded_by": 2,
+      "spo2": 96,
+      "heart_rate": 88,
+      "respiratory_rate": 18,
+      "systolic_bp": 178,
+      "diastolic_bp": 104,
+      "temperature": "36.8",
+      "is_critical": true,
+      "recorded_at": "2026-09-06T10:25:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 3,
+    "fields": {
+      "patient": 3,
+      "recorded_by": 2,
+      "spo2": 99,
+      "heart_rate": 112,
+      "respiratory_rate": 16,
+      "systolic_bp": 122,
+      "diastolic_bp": 78,
+      "temperature": "36.9",
+      "is_critical": false,
+      "recorded_at": "2026-09-06T10:16:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 4,
+    "fields": {
+      "patient": 4,
+      "recorded_by": 2,
+      "spo2": 95,
+      "heart_rate": 84,
+      "respiratory_rate": 19,
+      "systolic_bp": 128,
+      "diastolic_bp": 82,
+      "temperature": "38.4",
+      "is_critical": false,
+      "recorded_at": "2026-09-06T10:08:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 5,
+    "fields": {
+      "patient": 5,
+      "recorded_by": 2,
+      "spo2": 98,
+      "heart_rate": 74,
+      "respiratory_rate": 14,
+      "systolic_bp": 118,
+      "diastolic_bp": 76,
+      "temperature": "36.7",
+      "is_critical": false,
+      "recorded_at": "2026-09-06T10:00:00Z"
+    }
+  },
+  {
+    "model": "triage.vitalsign",
+    "pk": 6,
+    "fields": {
+      "patient": 6,
+      "recorded_by": 2,
+      "spo2": 99,
+      "heart_rate": 70,
+      "respiratory_rate": 14,
+      "systolic_bp": 115,
+      "diastolic_bp": 72,
+      "temperature": "36.6",
+      "is_critical": false,
+      "recorded_at": "2026-09-06T09:50:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 1,
+    "fields": {
+      "patient": 1,
+      "assessed_by": 2,
+      "priority": 1,
+      "primary_complaint": "Severe breathing difficulty",
+      "symptom_onset": "About 30 minutes ago",
+      "severe_breathing_difficulty": true,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": false,
+      "clinical_notes": "Hypoxia with marked respiratory effort.",
+      "ai_suggested_priority": 1,
+      "ai_rationale": "Severe respiratory distress accompanied by SpO2 below 90% qualifies as Manchester Triage Level 1 Emergency.",
+      "ai_summary": "John presents with severe breathing difficulty. Recorded oxygen saturation is below the expected range and requires prompt clinical assessment.",
+      "created_at": "2026-09-06T10:40:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 2,
+    "fields": {
+      "patient": 2,
+      "assessed_by": 2,
+      "priority": 2,
+      "primary_complaint": "Sudden weakness and slurred speech",
+      "symptom_onset": "45 minutes ago",
+      "severe_breathing_difficulty": false,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": true,
+      "clinical_notes": "Possible acute cerebrovascular event. Needs emergency doctor review.",
+      "ai_suggested_priority": 2,
+      "ai_rationale": "Sudden focal neurological deficits require rapid high-priority stroke screening.",
+      "ai_summary": "Maria presents with acute neurological symptoms and severe hypertensive blood pressure (178/104). Immediate clinical evaluation required.",
+      "created_at": "2026-09-06T10:26:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 3,
+    "fields": {
+      "patient": 3,
+      "assessed_by": 2,
+      "priority": 2,
+      "primary_complaint": "Deep laceration to left hand",
+      "symptom_onset": "20 minutes ago",
+      "severe_breathing_difficulty": false,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": false,
+      "clinical_notes": "Active hemorrhage controlled with pressure dressing. Elevated tachycardia.",
+      "created_at": "2026-09-06T10:18:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 4,
+    "fields": {
+      "patient": 4,
+      "assessed_by": 2,
+      "priority": 3,
+      "primary_complaint": "Fever and persistent cough",
+      "symptom_onset": "2 days ago",
+      "severe_breathing_difficulty": false,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": false,
+      "clinical_notes": "Febrile (38.4C) with productive cough.",
+      "created_at": "2026-09-06T10:10:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 5,
+    "fields": {
+      "patient": 5,
+      "assessed_by": 2,
+      "priority": 3,
+      "primary_complaint": "Abdominal pain, 2 hours",
+      "symptom_onset": "2 hours ago",
+      "severe_breathing_difficulty": false,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": false,
+      "clinical_notes": "Moderate periumbilical cramping. Vitals stable.",
+      "created_at": "2026-09-06T10:02:00Z"
+    }
+  },
+  {
+    "model": "triage.triageassessment",
+    "pk": 6,
+    "fields": {
+      "patient": 6,
+      "assessed_by": 2,
+      "priority": 4,
+      "primary_complaint": "Prescription renewal",
+      "symptom_onset": "N/A",
+      "severe_breathing_difficulty": false,
+      "chest_pain_or_pressure": false,
+      "slurred_speech_or_weakness": false,
+      "clinical_notes": "Routine medication renewal request. No acute distress.",
+      "created_at": "2026-09-06T09:53:00Z"
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 1,
+    "fields": {
+      "patient": 1,
+      "triage_assessment": 1,
+      "facility": 1,
+      "ticket_number": "ST-2048",
+      "priority": 1,
+      "status": "Waiting",
+      "assigned_room": "A-04",
+      "arrived_at": "2026-09-06T10:40:00Z",
+      "estimated_wait_minutes": 4,
+      "order": 1
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 2,
+    "fields": {
+      "patient": 2,
+      "triage_assessment": 2,
+      "facility": 1,
+      "ticket_number": "ST-2049",
+      "priority": 2,
+      "status": "Waiting",
+      "assigned_room": "A-02",
+      "arrived_at": "2026-09-06T10:26:00Z",
+      "estimated_wait_minutes": 18,
+      "order": 2
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 3,
+    "fields": {
+      "patient": 3,
+      "triage_assessment": 3,
+      "facility": 1,
+      "ticket_number": "ST-2050",
+      "priority": 2,
+      "status": "Waiting",
+      "assigned_room": "A-01",
+      "arrived_at": "2026-09-06T10:18:00Z",
+      "estimated_wait_minutes": 26,
+      "order": 3
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 4,
+    "fields": {
+      "patient": 4,
+      "triage_assessment": 4,
+      "facility": 1,
+      "ticket_number": "ST-2051",
+      "priority": 3,
+      "status": "Waiting",
+      "assigned_room": "B-07",
+      "arrived_at": "2026-09-06T10:10:00Z",
+      "estimated_wait_minutes": 34,
+      "order": 4
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 5,
+    "fields": {
+      "patient": 5,
+      "triage_assessment": 5,
+      "facility": 1,
+      "ticket_number": "ST-2052",
+      "priority": 3,
+      "status": "Triage complete",
+      "assigned_room": "B-03",
+      "arrived_at": "2026-09-06T10:02:00Z",
+      "estimated_wait_minutes": 42,
+      "order": 5
+    }
+  },
+  {
+    "model": "triage.queueticket",
+    "pk": 6,
+    "fields": {
+      "patient": 6,
+      "triage_assessment": 6,
+      "facility": 1,
+      "ticket_number": "ST-2053",
+      "priority": 4,
+      "status": "Waiting",
+      "assigned_room": "C-02",
+      "arrived_at": "2026-09-06T09:53:00Z",
+      "estimated_wait_minutes": 51,
+      "order": 6
+    }
+  },
+  {
+    "model": "analytics.activitylog",
+    "pk": 1,
+    "fields": {
+      "event_type": "Triage completed",
+      "patient_name": "David Kim",
+      "description": "Triage Level 3 assigned by Jordan Lee",
+      "actor": 2,
+      "timestamp": "2026-09-06T10:42:00Z"
+    }
+  },
+  {
+    "model": "analytics.activitylog",
+    "pk": 2,
+    "fields": {
+      "event_type": "Vitals recorded",
+      "patient_name": "Eleanor Wright",
+      "description": "Temperature 38.4C recorded",
+      "actor": 2,
+      "timestamp": "2026-09-06T10:39:00Z"
+    }
+  },
+  {
+    "model": "analytics.activitylog",
+    "pk": 3,
+    "fields": {
+      "event_type": "Patient registered",
+      "patient_name": "Aisha Patel",
+      "description": "Intake completed by Front Desk",
+      "actor": 3,
+      "timestamp": "2026-09-06T10:35:00Z"
+    }
+  },
+  {
+    "model": "analytics.activitylog",
+    "pk": 4,
+    "fields": {
+      "event_type": "Consultation started",
+      "patient_name": "Maria Santos",
+      "description": "Dr. Alex Rivera began clinical assessment in A-02",
+      "actor": 1,
+      "timestamp": "2026-09-06T10:31:00Z"
+    }
+  }
+]

@@ -17,12 +17,15 @@ __v0_jsx-dev-runtime.ts
 
 # Dependencies
 node_modules/
+frontend/node_modules/
 .pnp
 .pnp.js
 
 # Build files & outputs
 .next/
+frontend/.next/
 out/
+frontend/out/
 build/
 dist/
 *.tsbuildinfo
@@ -32,6 +35,27 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Python & Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.sqlite3
+*.db
+local_settings.py
+celerybeat-schedule
+celerybeat.pid
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
 
 # System & OS files
 .DS_Store

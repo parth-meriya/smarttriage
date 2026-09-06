@@ -1,0 +1,175 @@
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Database with pgvector extension
+  # ----------------------------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: smarttriage_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smarttriage_db}
+      POSTGRES_USER: ${POSTGRES_USER:-smarttriage_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smarttriage_secure_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smarttriage_user} -d ${POSTGRES_DB:-smarttriage_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Redis Message Broker & Cache
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: smarttriage_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Django + DRF + Channels ASGI Backend
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smarttriage_backend
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py loaddata fixtures/seed_data.json || true &&
+             daphne -b 0.0.0.0 -p 8000 smarttriage.asgi:application"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=${SECRET_KEY:-smarttriage-insecure-development-secret-key}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-smarttriage_user}:${POSTGRES_PASSWORD:-smarttriage_secure_password}@db:5432/${POSTGRES_DB:-smarttriage_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - AI_SERVICE_URL=http://ai_service:8001
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,0.0.0.0
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # Celery Background Worker
+  # ----------------------------------------------------------------------------
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smarttriage_celery_worker
+    restart: unless-stopped
+    command: celery -A smarttriage worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=${SECRET_KEY:-smarttriage-insecure-development-secret-key}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-smarttriage_user}:${POSTGRES_PASSWORD:-smarttriage_secure_password}@db:5432/${POSTGRES_DB:-smarttriage_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - AI_SERVICE_URL=http://ai_service:8001
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # Celery Periodic Task Scheduler (Beat)
+  # ----------------------------------------------------------------------------
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smarttriage_celery_beat
+    restart: unless-stopped
+    command: celery -A smarttriage beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=${SECRET_KEY:-smarttriage-insecure-development-secret-key}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-smarttriage_user}:${POSTGRES_PASSWORD:-smarttriage_secure_password}@db:5432/${POSTGRES_DB:-smarttriage_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # FastAPI AI Decision Support & RAG Microservice
+  # ----------------------------------------------------------------------------
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    container_name: smarttriage_ai_service
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ./ai_service:/app
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-smarttriage_user}:${POSTGRES_PASSWORD:-smarttriage_secure_password}@db:5432/${POSTGRES_DB:-smarttriage_db}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ----------------------------------------------------------------------------
+  # Next.js 16 Frontend
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smarttriage_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
+      - NEXT_PUBLIC_AI_SERVICE_URL=http://localhost:8001/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
