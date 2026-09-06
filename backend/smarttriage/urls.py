@@ -1,8 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
+    # Root redirects directly to interactive Swagger API documentation
+    path('', RedirectView.as_view(url='/api/docs/', permanent=False), name='api-root-redirect'),
+
     path('admin/', admin.site.urls),
 
     # API v1 routes
