@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { AlertCircle, Clock3, HeartPulse, Search, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, Clock3, HeartPulse, Search, ShieldCheck, X } from 'lucide-react';
 import { Patient } from '@/types/triage';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,11 +14,22 @@ interface NurseViewProps {
 export function NurseView({ onOpenPatient }: NurseViewProps) {
   const { user } = useAuth();
   const { attentionPatients, waitingPatients, counts } = useQueue();
+  const [showSearch, setShowSearch] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const allPatients = [...attentionPatients, ...waitingPatients];
   const nextPatient = allPatients[0];
   const needingTriageCount = counts.emergency + counts.high_priority;
   const nurseName = user?.first_name || 'Jordan';
+
+  const filteredPatients = searchQuery.trim()
+    ? allPatients.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.complaint.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.mrn && p.mrn.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : allPatients.slice(0, 5);
 
   return (
     <>
@@ -68,27 +79,59 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
             <h2>Patients needing triage</h2>
             <p>New arrivals are ready to be assessed.</p>
           </div>
-          <button className="filter-button">
-            <Search size={16} /> Search
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {showSearch ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fff', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px' }}>
+                <Search size={14} style={{ color: 'var(--muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Filter by name, MRN, complaint..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  style={{ border: 'none', outline: 'none', fontSize: '12px', width: '200px' }}
+                />
+                <button
+                  onClick={() => {
+                    setShowSearch(false);
+                    setSearchQuery('');
+                  }}
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  aria-label="Close search"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button className="filter-button" onClick={() => setShowSearch(true)}>
+                <Search size={16} /> Search
+              </button>
+            )}
+          </div>
         </div>
         <div className="nurse-list">
-          {allPatients.slice(0, 5).map((p) => (
-            <div className="nurse-patient" key={p.name}>
-              <div className="avatar patient-avatar">{p.initials}</div>
-              <div className="nurse-name">
-                <strong>{p.name}</strong>
-                <span>
-                  {p.age} years · Arrived {p.wait} ago
-                </span>
-              </div>
-              <div className="nurse-complaint">{p.complaint}</div>
-              <PriorityBadge level={p.priority} compact />
-              <button className="row-action" onClick={() => onOpenPatient(p)}>
-                Begin triage <span>→</span>
-              </button>
+          {filteredPatients.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
+              No patients match &quot;{searchQuery}&quot;.
             </div>
-          ))}
+          ) : (
+            filteredPatients.map((p) => (
+              <div className="nurse-patient" key={p.name}>
+                <div className="avatar patient-avatar">{p.initials}</div>
+                <div className="nurse-name">
+                  <strong>{p.name}</strong>
+                  <span>
+                    {p.age} years · Arrived {p.wait} ago
+                  </span>
+                </div>
+                <div className="nurse-complaint">{p.complaint}</div>
+                <PriorityBadge level={p.priority} compact />
+                <button className="row-action" onClick={() => onOpenPatient(p)}>
+                  Begin triage <span>→</span>
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
