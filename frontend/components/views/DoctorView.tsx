@@ -1,16 +1,21 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import { AlertCircle, ChevronDown, ListFilter, X } from 'lucide-react';
 import { Patient } from '@/types/triage';
-import { mockPatients } from '@/data/mockPatients';
 import { AttentionCard } from '@/components/triage/AttentionCard';
 import { PatientRow } from '@/components/triage/PatientRow';
+import { useQueue } from '@/hooks/useQueue';
 
 interface DoctorViewProps {
   onOpenPatient: (patient: Patient) => void;
 }
 
 export function DoctorView({ onOpenPatient }: DoctorViewProps) {
-  const emergencyPatient = mockPatients[0];
+  const { attentionPatients, waitingPatients, counts } = useQueue();
+  const [alertDismissed, setAlertDismissed] = useState(false);
+
+  const topEmergencyPatient = attentionPatients[0];
 
   return (
     <>
@@ -26,15 +31,25 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
         </button>
       </div>
 
-      <div className="alert-strip">
-        <AlertCircle size={19} />
-        <div>
-          <strong>1 new emergency patient</strong>
-          <span>Arrived 2 minutes ago and is waiting for immediate attention.</span>
+      {!alertDismissed && counts.emergency > 0 && topEmergencyPatient && (
+        <div className="alert-strip">
+          <AlertCircle size={19} />
+          <div>
+            <strong>
+              {counts.emergency} new emergency patient{counts.emergency > 1 ? 's' : ''}
+            </strong>
+            <span>Arrived recently and waiting for immediate attention.</span>
+          </div>
+          <button onClick={() => onOpenPatient(topEmergencyPatient)}>Review now →</button>
+          <button
+            onClick={() => setAlertDismissed(true)}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            aria-label="Dismiss alert"
+          >
+            <X size={17} />
+          </button>
         </div>
-        <button onClick={() => onOpenPatient(emergencyPatient)}>Review now →</button>
-        <X size={17} />
-      </div>
+      )}
 
       <section className="section">
         <div className="section-heading">
@@ -43,12 +58,13 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
             <p>Start with patients requiring the most urgent assessment.</p>
           </div>
           <button className="text-button">
-            View all 3 <span>→</span>
+            View all {attentionPatients.length} <span>→</span>
           </button>
         </div>
         <div className="attention-grid">
-          <AttentionCard patient={mockPatients[0]} onOpen={onOpenPatient} />
-          <AttentionCard patient={mockPatients[1]} onOpen={onOpenPatient} />
+          {attentionPatients.slice(0, 2).map((p) => (
+            <AttentionCard key={p.name} patient={p} onOpen={onOpenPatient} />
+          ))}
         </div>
       </section>
 
@@ -75,7 +91,7 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
             <span>Status</span>
             <span />
           </div>
-          {mockPatients.slice(2).map((p) => (
+          {waitingPatients.map((p) => (
             <PatientRow key={p.name} patient={p} onOpen={onOpenPatient} />
           ))}
         </div>
