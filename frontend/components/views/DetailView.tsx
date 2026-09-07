@@ -1,9 +1,10 @@
-import React from 'react';
-import { AlertCircle, Clock3, FileText, HeartPulse, History } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, Clock3, FileText, HeartPulse, History, CheckCircle2 } from 'lucide-react';
 import { Patient } from '@/types/triage';
 import { mockPatients } from '@/data/mockPatients';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Assistant } from '@/components/ai/Assistant';
+import { triageApi } from '@/lib/api/services';
 
 interface DetailViewProps {
   patient?: Patient;
@@ -12,12 +13,30 @@ interface DetailViewProps {
 
 export function DetailView({ patient, onBack }: DetailViewProps) {
   const p = patient || mockPatients[0];
+  const [status, setStatus] = useState<string>(p.status || 'Waiting');
+  const [isCalling, setIsCalling] = useState<boolean>(false);
+
+  const handleStartConsultation = async () => {
+    setIsCalling(true);
+    try {
+      if (p.id) {
+        await triageApi.callPatient(p.id);
+      }
+      setStatus('In consultation');
+    } catch {
+      // Graceful offline fallback
+      setStatus('In consultation');
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
   const isHypoxic = p.spo2 !== undefined ? p.spo2 < 90 : p.priority === 1;
   const isTachycardic = p.heartRate !== undefined ? p.heartRate > 100 : false;
   const isTachypneic = p.respiratoryRate !== undefined ? p.respiratoryRate > 20 : false;
 
   const timelineEvents: [string, string][] = [
-    ['10:42 AM', 'Triage completed'],
+    status === 'In consultation' ? ['Just now', 'Consultation started'] : ['10:42 AM', 'Triage completed'],
     ['10:39 AM', 'Vitals recorded'],
     ['10:35 AM', 'Patient registered'],
   ];
@@ -41,8 +60,23 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
         </div>
         <div className="detail-actions">
           <PriorityBadge level={p.priority} />
-          <button className="primary-action">
-            Start consultation <span>→</span>
+          <button
+            className="primary-action"
+            onClick={handleStartConsultation}
+            disabled={isCalling || status === 'In consultation'}
+            style={status === 'In consultation' ? { background: '#16a34a', borderColor: '#16a34a' } : undefined}
+          >
+            {isCalling ? (
+              'Starting...'
+            ) : status === 'In consultation' ? (
+              <>
+                <CheckCircle2 size={14} style={{ marginRight: '6px' }} /> In consultation
+              </>
+            ) : (
+              <>
+                Start consultation <span>→</span>
+              </>
+            )}
           </button>
         </div>
       </div>

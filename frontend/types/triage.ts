@@ -2,6 +2,8 @@ export type Priority = 1 | 2 | 3 | 4;
 export type Role = 'Doctor' | 'Nurse' | 'Admin' | 'Patient';
 
 export interface Patient {
+  id?: number;
+  patientId?: number;
   name: string;
   initials: string;
   age: number;

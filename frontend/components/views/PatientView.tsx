@@ -1,18 +1,58 @@
-import React from 'react';
-import { CalendarDays, ShieldCheck } from 'lucide-react';
+'use client';
+
+import React, { useState } from 'react';
+import { CalendarDays, ShieldCheck, CheckCircle2, ChevronRight, X } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { InfoIcon } from '@/components/common/InfoIcon';
+import { useAuth } from '@/hooks/useAuth';
+import { useQueue } from '@/hooks/useQueue';
+import { mockPatients } from '@/data/mockPatients';
 
 export function PatientView() {
+  const { user } = useAuth();
+  const { attentionPatients, waitingPatients, counts } = useQueue();
+  const [showDetails, setShowDetails] = useState<boolean>(false);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+
+  const allPatients = [...attentionPatients, ...waitingPatients];
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Jamie';
+  const initials = user?.initials || 'JS';
+
+  // Match the patient's ticket if present in queue, or find Jamie or fallback to 4th patient
+  const myPatient =
+    allPatients.find(
+      (p) =>
+        p.name.toLowerCase().includes(firstName.toLowerCase()) ||
+        p.name.toLowerCase().includes('jamie')
+    ) ||
+    allPatients[3] ||
+    mockPatients[3];
+
+  const queueIndex = allPatients.findIndex((p) => p.name === myPatient?.name);
+  const queuePosition = queueIndex !== -1 ? queueIndex + 1 : 4;
+  const totalWaiting = counts.total_waiting || allPatients.length || 12;
+  const estimatedWait = `~${queuePosition * 5} min`;
+  const visitId = myPatient?.mrn || 'ST-2048';
+  const currentStatus = myPatient?.status || 'Waiting';
+
+  const nextStep =
+    currentStatus === 'In consultation'
+      ? 'Doctor consultation in progress'
+      : currentStatus === 'Triage complete'
+      ? 'Doctor examination'
+      : currentStatus === 'Triage in progress'
+      ? 'Nurse clinical triage'
+      : 'Nurse assessment';
+
   return (
     <>
       <div className="patient-welcome">
         <div>
           <div className="eyebrow">Northside Medical Center</div>
-          <h1>Hello, Jamie</h1>
+          <h1>Hello, {firstName}</h1>
           <p className="page-subtitle">Here is the latest update on your visit.</p>
         </div>
-        <div className="patient-top-avatar">JS</div>
+        <div className="patient-top-avatar">{initials}</div>
       </div>
 
       <section className="patient-status-card">
@@ -22,29 +62,35 @@ export function PatientView() {
               <span />
               Current status
             </span>
-            <h2>Your visit is in progress</h2>
+            <h2>{currentStatus === 'In consultation' ? 'You are currently with a doctor' : 'Your visit is in progress'}</h2>
           </div>
-          <StatusBadge>Waiting</StatusBadge>
+          <StatusBadge>{currentStatus}</StatusBadge>
         </div>
 
         <div className="queue-position">
           <div>
             <span>Your queue position</span>
-            <strong>4</strong>
-            <small>of 12 patients waiting</small>
+            <strong>{currentStatus === 'In consultation' ? 'Now' : queuePosition}</strong>
+            <small>
+              {currentStatus === 'In consultation'
+                ? 'Currently in examination'
+                : `of ${totalWaiting} patients waiting`}
+            </small>
           </div>
           <div className="position-divider" />
           <div>
             <span>Estimated wait</span>
-            <strong>~18 min</strong>
-            <small>Updated just now</small>
+            <strong>{currentStatus === 'In consultation' ? '0 min' : estimatedWait}</strong>
+            <small>Updated live · priority based</small>
           </div>
         </div>
 
         <div className="patient-instruction">
           <InfoIcon />
           <span>
-            Please remain available in the waiting area. We will call your name when it is time for your assessment.
+            {currentStatus === 'In consultation'
+              ? 'Your examination is underway. Please discuss all your symptoms with your physician.'
+              : 'Please remain available in the waiting area. We will call your name when it is time for your assessment.'}
           </span>
         </div>
       </section>
@@ -57,18 +103,39 @@ export function PatientView() {
           </div>
           <div className="visit-line">
             <span>Visit ID</span>
-            <strong>ST-2048</strong>
+            <strong>{visitId}</strong>
           </div>
           <div className="visit-line">
             <span>Status</span>
-            <StatusBadge>Waiting</StatusBadge>
+            <StatusBadge>{currentStatus}</StatusBadge>
           </div>
           <div className="visit-line">
             <span>Next step</span>
-            <strong>Nurse assessment</strong>
+            <strong>{nextStep}</strong>
           </div>
-          <button className="secondary-action">
-            View visit details <span>→</span>
+
+          {showDetails && (
+            <div style={{ marginTop: '12px', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: 'var(--muted)' }}>Reported complaint:</span>
+                <strong>{myPatient?.complaint || 'Mild dizziness and headache'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ color: 'var(--muted)' }}>Assigned room:</span>
+                <strong>{myPatient?.room || 'Waiting Area B'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--muted)' }}>Vitals recorded:</span>
+                <strong>{myPatient?.vital || 'SpO₂ 98% · HR 74'}</strong>
+              </div>
+            </div>
+          )}
+
+          <button
+            className="secondary-action"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            {showDetails ? 'Hide visit details' : 'View visit details'} <span>{showDetails ? '↑' : '→'}</span>
           </button>
         </section>
 
@@ -80,8 +147,18 @@ export function PatientView() {
           <p className="help-copy">
             If your symptoms change or become more severe, please tell a member of staff right away.
           </p>
-          <button className="secondary-action">
-            How triage works <span>→</span>
+
+          {showHelp && (
+            <div style={{ margin: '10px 0', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--muted)' }}>
+              Emergency departments use the <strong>Manchester Triage System</strong> to prioritize patients based on medical urgency rather than arrival time. Life-threatening conditions are assessed immediately.
+            </div>
+          )}
+
+          <button
+            className="secondary-action"
+            onClick={() => setShowHelp(!showHelp)}
+          >
+            {showHelp ? 'Close guide' : 'How triage works'} <span>{showHelp ? '↑' : '→'}</span>
           </button>
         </section>
       </div>

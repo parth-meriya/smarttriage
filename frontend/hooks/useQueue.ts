@@ -26,6 +26,8 @@ export function ticketToPatient(t: QueueTicketDto): Patient {
   }
 
   return {
+    id: t.id,
+    patientId: t.patient_id,
     name: t.name,
     initials: t.initials,
     age: t.age,
