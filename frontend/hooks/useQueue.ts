@@ -65,6 +65,8 @@ export function useQueue() {
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
+  const [emergencyAlert, setEmergencyAlert] = useState<any | null>(null);
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -83,12 +85,72 @@ export function useQueue() {
     }
   }, []);
 
+  // WebSockets for instant live feed synchronization
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8000/ws/queue/`;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isMounted = true;
+
+    function connect() {
+      try {
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          if (isMounted) setIsLiveConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === 'queue_updated') {
+              fetchQueue();
+            } else if (payload.type === 'emergency_alert') {
+              fetchQueue();
+              if (isMounted) {
+                setEmergencyAlert(payload.data);
+              }
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        };
+
+        ws.onerror = () => {
+          if (isMounted) setIsLiveConnected(false);
+        };
+
+        ws.onclose = () => {
+          if (isMounted) {
+            setIsLiveConnected(false);
+            reconnectTimeout = setTimeout(connect, 4000);
+          }
+        };
+      } catch {
+        if (isMounted) setIsLiveConnected(false);
+      }
+    }
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (ws) ws.close();
+    };
+  }, [fetchQueue]);
+
+  // Polling fallback every 6 seconds (or 15 seconds if WebSocket is connected)
   useEffect(() => {
     fetchQueue();
-    // Refresh queue every 5 seconds
-    const interval = setInterval(fetchQueue, 5000);
+    const interval = setInterval(fetchQueue, isLiveConnected ? 15000 : 6000);
     return () => clearInterval(interval);
-  }, [fetchQueue, isAuthenticated]);
+  }, [fetchQueue, isAuthenticated, isLiveConnected]);
 
   return {
     attentionPatients,
@@ -96,6 +158,8 @@ export function useQueue() {
     counts,
     isLoading,
     error,
+    isLiveConnected,
+    emergencyAlert,
     refetch: fetchQueue,
   };
 }

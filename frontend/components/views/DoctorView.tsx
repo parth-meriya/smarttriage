@@ -12,7 +12,7 @@ interface DoctorViewProps {
 }
 
 export function DoctorView({ onOpenPatient }: DoctorViewProps) {
-  const { attentionPatients, waitingPatients, counts } = useQueue();
+  const { attentionPatients, waitingPatients, counts, isLiveConnected } = useQueue();
   const [alertDismissed, setAlertDismissed] = useState(false);
 
   const topEmergencyPatient = attentionPatients[0];
@@ -25,9 +25,9 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
           <h1>Who needs my attention?</h1>
           <p className="page-subtitle">Good morning, Dr. Rivera. Here is the current clinical priority.</p>
         </div>
-        <button className="availability">
-          <span />
-          Available <ChevronDown size={14} />
+        <button className="availability" title={isLiveConnected ? "Real-time live WebSocket connected" : "Auto-polling active"}>
+          <span style={isLiveConnected ? { background: '#16a34a', boxShadow: '0 0 0 3px rgba(22, 163, 74, 0.25)' } : undefined} />
+          {isLiveConnected ? 'Live' : 'Available'} <ChevronDown size={14} />
         </button>
       </div>
 
