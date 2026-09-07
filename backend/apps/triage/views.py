@@ -161,6 +161,7 @@ class QueueViewSet(viewsets.ModelViewSet):
                 'urgent': urgent_count,
                 'non_urgent': non_urgent_count,
                 'total_waiting': active_tickets.count(),
+                'triage_in_progress': active_tickets.filter(status=QueueTicket.Status.TRIAGE_IN_PROGRESS).count(),
             }
         })
 
@@ -170,6 +171,11 @@ class QueueViewSet(viewsets.ModelViewSet):
         ticket.status = QueueTicket.Status.IN_CONSULTATION
         ticket.called_at = timezone.now()
         ticket.save()
+        if ticket.visit:
+            ticket.visit.status = Visit.Status.IN_CONSULTATION
+            if request.user.is_authenticated and getattr(request.user, 'role', None) == 'Doctor':
+                ticket.visit.assigned_doctor = request.user
+            ticket.visit.save()
         return Response(self.get_serializer(ticket).data)
 
     @action(detail=True, methods=['post'])

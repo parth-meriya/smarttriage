@@ -92,6 +92,7 @@ export interface LiveQueueResponse {
     urgent: number;
     non_urgent: number;
     total_waiting: number;
+    triage_in_progress?: number;
   };
 }
 
@@ -132,3 +133,26 @@ export interface AIAssessmentResponse {
   clinical_review_required: boolean;
   disclaimer: string;
 }
+
+export interface ConsultationDto {
+  id?: number;
+  patient: number;
+  patient_name?: string;
+  doctor?: number;
+  doctor_name?: string;
+  started_at?: string;
+  completed_at?: string;
+  chief_complaint: string;
+  clinical_findings?: string;
+  diagnosis?: string;
+  treatment_plan?: string;
+  disposition?: 'Discharged' | 'Admitted' | 'Observation' | 'Transferred';
+}
+
+export interface PatientHistoryResponse {
+  patient: any;
+  vitals: VitalSignDto[];
+  triage_history: TriageAssessmentDto[];
+  visits: QueueTicketDto[];
+}
+

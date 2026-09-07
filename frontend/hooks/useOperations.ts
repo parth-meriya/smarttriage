@@ -7,53 +7,24 @@ import { useAuth } from './useAuth';
 
 const DEFAULT_METRICS: OperationsMetricsResponse = {
   operations: {
-    arrivals: 24,
-    arrivals_delta: '+4 from yesterday',
-    waiting: 12,
-    waiting_subtext: '8 under 30 min',
-    in_triage: 3,
-    in_triage_subtext: '2 nurses active',
-    with_doctor: 5,
-    with_doctor_subtext: '3 rooms occupied',
-    completed: 18,
+    arrivals: 0,
+    arrivals_delta: '+0 from yesterday',
+    waiting: 0,
+    waiting_subtext: '0 under 30 min',
+    in_triage: 0,
+    in_triage_subtext: '0 nurses active',
+    with_doctor: 0,
+    with_doctor_subtext: '0 rooms occupied',
+    completed: 0,
     completed_subtext: 'Today',
   },
   queue_overview: [
-    { label: 'Emergency', count: 1, color: 'red' },
-    { label: 'High priority', count: 2, color: 'amber' },
-    { label: 'Urgent', count: 5, color: 'gold' },
-    { label: 'Non-urgent', count: 4, color: 'teal' },
+    { label: 'Emergency', count: 0, color: 'red' },
+    { label: 'High priority', count: 0, color: 'amber' },
+    { label: 'Urgent', count: 0, color: 'gold' },
+    { label: 'Non-urgent', count: 0, color: 'teal' },
   ],
-  recent_activity: [
-    {
-      id: 1,
-      time_display: '10:42 AM',
-      event_type: 'Triage completed',
-      patient_name: 'David Kim',
-      description: 'Triage Level 3 assigned',
-    },
-    {
-      id: 2,
-      time_display: '10:39 AM',
-      event_type: 'Vitals recorded',
-      patient_name: 'Eleanor Wright',
-      description: 'Temperature 38.4°C recorded',
-    },
-    {
-      id: 3,
-      time_display: '10:35 AM',
-      event_type: 'Patient registered',
-      patient_name: 'Aisha Patel',
-      description: 'Registration intake completed',
-    },
-    {
-      id: 4,
-      time_display: '10:31 AM',
-      event_type: 'Consultation started',
-      patient_name: 'Maria Santos',
-      description: 'Dr. Alex Rivera in room A-02',
-    },
-  ],
+  recent_activity: [],
 };
 
 export function useOperations() {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Patient } from '@/types/triage';
-import { mockPatients } from '@/data/mockPatients';
 import { triageApi } from '@/lib/api/services';
 import { QueueTicketDto } from '@/lib/api/types';
 import { useAuth } from './useAuth';
@@ -54,15 +53,16 @@ export function ticketToPatient(t: QueueTicketDto): Patient {
 
 export function useQueue() {
   const { isAuthenticated } = useAuth();
-  const [allPatients, setAllPatients] = useState<Patient[]>(mockPatients);
-  const [attentionPatients, setAttentionPatients] = useState<Patient[]>(mockPatients.slice(0, 2));
-  const [waitingPatients, setWaitingPatients] = useState<Patient[]>(mockPatients.slice(2));
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
+  const [attentionPatients, setAttentionPatients] = useState<Patient[]>([]);
+  const [waitingPatients, setWaitingPatients] = useState<Patient[]>([]);
   const [counts, setCounts] = useState({
-    emergency: 1,
-    high_priority: 2,
-    urgent: 5,
-    non_urgent: 4,
-    total_waiting: 6,
+    emergency: 0,
+    high_priority: 0,
+    urgent: 0,
+    non_urgent: 0,
+    total_waiting: 0,
+    triage_in_progress: 0,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -93,7 +93,10 @@ export function useQueue() {
           setAllPatients(uniqueList);
         }
 
-        setCounts(data.counts);
+        setCounts({
+          ...data.counts,
+          triage_in_progress: data.counts.triage_in_progress ?? 0,
+        });
         setError(null);
       }
     } catch (err) {
