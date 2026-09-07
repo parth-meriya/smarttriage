@@ -43,30 +43,89 @@ class VitalSignViewSet(viewsets.ModelViewSet):
         serializer.save(recorded_by=self.request.user)
 
 
+from .engine import evaluate_triage
+from .questions import TRIAGE_QUESTIONS
+
 class TriageAssessmentViewSet(viewsets.ModelViewSet):
     queryset = TriageAssessment.objects.all()
     serializer_class = TriageAssessmentSerializer
     permission_classes = [IsClinicalStaff]
     filterset_fields = ['patient', 'priority']
 
+    @action(detail=False, methods=['get'])
+    def questions(self, request):
+        """Returns the standardized triage questionnaire."""
+        return Response(TRIAGE_QUESTIONS)
+
     def perform_create(self, serializer):
-        assessment = serializer.save(assessed_by=self.request.user)
-        # Update or create queue ticket
-        ticket, created = QueueTicket.objects.get_or_create(
-            patient=assessment.patient,
-            status__in=[QueueTicket.Status.WAITING, QueueTicket.Status.TRIAGE_IN_PROGRESS],
-            defaults={
-                'facility_id': 1,
-                'ticket_number': assessment.patient.mrn,
-                'priority': assessment.priority,
-                'status': QueueTicket.Status.WAITING,
-                'triage_assessment': assessment
-            }
+        patient = serializer.validated_data.get('patient')
+        complaint = serializer.validated_data.get('primary_complaint', '')
+        breathing = serializer.validated_data.get('severe_breathing_difficulty', False)
+        chest_pain = serializer.validated_data.get('chest_pain_or_pressure', False)
+        speech = serializer.validated_data.get('slurred_speech_or_weakness', False)
+
+        # Get latest vitals for this patient
+        latest_vitals = patient.vital_signs.first()
+        spo2 = latest_vitals.spo2 if latest_vitals else None
+        hr = latest_vitals.heart_rate if latest_vitals else None
+        rr = latest_vitals.respiratory_rate if latest_vitals else None
+        sbp = latest_vitals.systolic_bp if latest_vitals else None
+        dbp = latest_vitals.diastolic_bp if latest_vitals else None
+        temp = float(latest_vitals.temperature) if (latest_vitals and latest_vitals.temperature) else None
+
+        # Evaluate deterministic clinical triage priority
+        priority, rationale, risks = evaluate_triage(
+            primary_complaint=complaint,
+            severe_breathing_difficulty=breathing,
+            chest_pain_or_pressure=chest_pain,
+            slurred_speech_or_weakness=speech,
+            spo2=spo2,
+            heart_rate=hr,
+            respiratory_rate=rr,
+            systolic_bp=sbp,
+            diastolic_bp=dbp,
+            temperature=temp,
         )
-        if not created:
-            ticket.priority = assessment.priority
+
+        # Link or create active visit
+        active_visit = patient.visits.exclude(status=Visit.Status.COMPLETED).first()
+        if not active_visit:
+            active_visit = Visit.objects.create(
+                patient=patient,
+                chief_complaint=complaint,
+                priority=priority,
+                status=Visit.Status.TRIAGE_COMPLETE
+            )
+        else:
+            active_visit.priority = priority
+            active_visit.chief_complaint = complaint
+            active_visit.status = Visit.Status.TRIAGE_COMPLETE
+            active_visit.save()
+
+        assessment = serializer.save(
+            assessed_by=self.request.user,
+            priority=priority,
+            ai_rationale=rationale,
+            visit=active_visit
+        )
+
+        # Update or create queue ticket
+        ticket = QueueTicket.objects.filter(patient=patient).exclude(status=QueueTicket.Status.COMPLETED).first()
+        if not ticket:
+            QueueTicket.objects.create(
+                patient=patient,
+                visit=active_visit,
+                facility_id=1,
+                ticket_number=patient.mrn,
+                priority=priority,
+                status=QueueTicket.Status.TRIAGE_COMPLETE,
+                triage_assessment=assessment
+            )
+        else:
+            ticket.priority = priority
             ticket.triage_assessment = assessment
-            ticket.status = QueueTicket.Status.WAITING
+            ticket.visit = active_visit
+            ticket.status = QueueTicket.Status.TRIAGE_COMPLETE
             ticket.save()
 
 

@@ -45,6 +45,7 @@ class Patient(models.Model):
 
 class VitalSign(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='vital_signs')
+    visit = models.ForeignKey('Visit', on_delete=models.SET_NULL, null=True, blank=True, related_name='vital_signs')
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -109,6 +110,7 @@ class TriageAssessment(models.Model):
         LEVEL_4 = 4, 'Non-urgent'
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='triage_assessments')
+    visit = models.ForeignKey('Visit', on_delete=models.SET_NULL, null=True, blank=True, related_name='triage_assessments')
     assessed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
