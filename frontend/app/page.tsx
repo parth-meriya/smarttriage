@@ -10,6 +10,7 @@ import { NurseView } from '@/components/views/NurseView'
 import { PatientView } from '@/components/views/PatientView'
 import { AdminView } from '@/components/views/AdminView'
 import { DetailView } from '@/components/views/DetailView'
+import { TriageWorkflow } from '@/components/triage/TriageWorkflow'
 
 export default function Page() {
   const { role, switchRole } = useAuth()
@@ -40,6 +41,24 @@ export default function Page() {
       <AdminView />
     )
 
+  // Determine which detail view to show when a patient is selected
+  const renderPatientDetail = () => {
+    if (!selectedPatient) return null;
+
+    // Nurses get the triage workflow; Doctors get the clinical detail view
+    if (role === 'Nurse') {
+      return (
+        <TriageWorkflow
+          patient={selectedPatient}
+          onComplete={handleBack}
+          onCancel={handleBack}
+        />
+      );
+    }
+
+    return <DetailView patient={selectedPatient} onBack={handleBack} />;
+  };
+
   return (
     <div className="app-shell">
       <div className={mobileOpen ? 'sidebar-wrap open' : 'sidebar-wrap'}>
@@ -61,7 +80,7 @@ export default function Page() {
         </div>
         <main className="content">
           {selectedPatient && role !== 'Patient' ? (
-            <DetailView patient={selectedPatient} onBack={handleBack} />
+            renderPatientDetail()
           ) : (
             view
           )}

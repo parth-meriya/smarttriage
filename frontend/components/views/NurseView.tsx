@@ -30,11 +30,14 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
       )
     : allPatients.slice(0, 5);
 
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
   return (
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">Thursday, September 6, 2026</div>
+          <div className="eyebrow">{dateStr}</div>
           <h1>Good morning, {nurseName}</h1>
           <p className="page-subtitle">Here is what needs your attention first.</p>
         </div>
@@ -57,7 +60,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
         <div className="workflow-card">
           <HeartPulse size={18} />
           <div>
-            <strong>2 patients</strong>
+            <strong>{counts.triage_in_progress ?? 0} patients</strong>
             <span>Triage in progress</span>
           </div>
           <b>→</b>
