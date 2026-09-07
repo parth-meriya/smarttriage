@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Role, Patient } from '@/types/triage'
+import { useAuth } from '@/hooks/useAuth'
 import { Sidebar } from '@/components/common/Sidebar'
 import { Topbar } from '@/components/common/Topbar'
 import { DoctorView } from '@/components/views/DoctorView'
@@ -11,7 +12,7 @@ import { AdminView } from '@/components/views/AdminView'
 import { DetailView } from '@/components/views/DetailView'
 
 export default function Page() {
-  const [role, setRole] = useState<Role>('Doctor')
+  const { role, switchRole } = useAuth()
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -24,7 +25,7 @@ export default function Page() {
   }
 
   const handleRoleChange = (newRole: Role) => {
-    setRole(newRole)
+    switchRole(newRole)
     setSelectedPatient(null)
   }
 

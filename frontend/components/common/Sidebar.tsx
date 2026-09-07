@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Role } from '@/types/triage';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
   role: Role;
@@ -21,6 +22,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ role, setRole }: SidebarProps) {
+  const { user } = useAuth();
+
   const links =
     role === 'Doctor'
       ? [
@@ -52,6 +55,20 @@ export function Sidebar({ role, setRole }: SidebarProps) {
           ['Profile', UserRound],
         ];
 
+  const displayName =
+    user?.display_name ||
+    (role === 'Doctor'
+      ? 'Dr. Alex Rivera'
+      : role === 'Nurse'
+      ? 'Jordan Lee'
+      : role === 'Admin'
+      ? 'Sam Morgan'
+      : 'Jamie Smith');
+
+  const avatarInitials =
+    user?.initials ||
+    (role === 'Doctor' ? 'AR' : role === 'Nurse' ? 'JL' : role === 'Admin' ? 'SM' : 'JS');
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -82,19 +99,9 @@ export function Sidebar({ role, setRole }: SidebarProps) {
           <span>Help & safety</span>
         </button>
         <div className="user-mini">
-          <div className="avatar">
-            {role === 'Doctor' ? 'AR' : role === 'Nurse' ? 'JL' : 'SM'}
-          </div>
+          <div className="avatar">{avatarInitials}</div>
           <div>
-            <strong>
-              {role === 'Doctor'
-                ? 'Dr. Alex Rivera'
-                : role === 'Nurse'
-                ? 'Jordan Lee'
-                : role === 'Admin'
-                ? 'Sam Morgan'
-                : 'Jamie Smith'}
-            </strong>
+            <strong>{displayName}</strong>
             <small>{role}</small>
           </div>
           <MoreHorizontal size={17} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bell, Menu, Search } from 'lucide-react';
 import { Role } from '@/types/triage';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TopbarProps {
   role: Role;
@@ -8,6 +9,12 @@ interface TopbarProps {
 }
 
 export function Topbar({ role, onMenu }: TopbarProps) {
+  const { user } = useAuth();
+
+  const avatarInitials =
+    user?.initials ||
+    (role === 'Doctor' ? 'AR' : role === 'Nurse' ? 'JL' : role === 'Admin' ? 'SM' : 'JS');
+
   return (
     <header className="topbar">
       <button className="mobile-menu" onClick={onMenu}>
@@ -27,9 +34,7 @@ export function Topbar({ role, onMenu }: TopbarProps) {
           <Bell size={19} />
           <i />
         </button>
-        <div className="top-avatar">
-          {role === 'Doctor' ? 'AR' : role === 'Nurse' ? 'JL' : 'SM'}
-        </div>
+        <div className="top-avatar">{avatarInitials}</div>
       </div>
     </header>
   );
