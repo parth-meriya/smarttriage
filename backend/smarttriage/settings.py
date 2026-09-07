@@ -2,9 +2,14 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import sys
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env files
+load_dotenv(BASE_DIR.parent / '.env')
+load_dotenv(BASE_DIR / '.env')
 
 # Add apps directory to Python path
 sys.path.insert(0, str(BASE_DIR))
