@@ -28,6 +28,8 @@ class TriageAssessmentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+from drf_spectacular.utils import extend_schema_field
+
 class PatientSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     latest_vitals = serializers.SerializerMethodField()
@@ -37,15 +39,21 @@ class PatientSerializer(serializers.ModelSerializer):
         model = Patient
         fields = [
             'id', 'first_name', 'last_name', 'name', 'initials', 'mrn',
-            'age', 'gender', 'date_of_birth', 'phone', 'address',
-            'registered_at', 'latest_vitals', 'active_assessment'
+            'age', 'gender', 'date_of_birth', 'phone', 'email', 'address',
+            'emergency_contact_name', 'emergency_contact_phone',
+            'registered_at', 'created_at', 'latest_vitals', 'active_assessment'
         ]
-        read_only_fields = ['id', 'name', 'initials', 'registered_at']
+        read_only_fields = ['id', 'name', 'initials', 'registered_at', 'created_at']
+        extra_kwargs = {
+            'mrn': {'required': False}
+        }
 
+    @extend_schema_field(VitalSignSerializer)
     def get_latest_vitals(self, obj):
         v = obj.vital_signs.first()
         return VitalSignSerializer(v).data if v else None
 
+    @extend_schema_field(TriageAssessmentSerializer)
     def get_active_assessment(self, obj):
         a = obj.triage_assessments.first()
         return TriageAssessmentSerializer(a).data if a else None
@@ -70,12 +78,14 @@ class QueueTicketSerializer(serializers.ModelSerializer):
             'arrived_at', 'estimated_wait_minutes', 'called_at'
         ]
 
+    @extend_schema_field(serializers.CharField)
     def get_complaint(self, obj):
         if obj.triage_assessment:
             return obj.triage_assessment.primary_complaint
         first_triage = obj.patient.triage_assessments.first()
         return first_triage.primary_complaint if first_triage else "Pending triage"
 
+    @extend_schema_field(serializers.CharField)
     def get_vital(self, obj):
         v = obj.patient.vital_signs.first()
         return v.display_vital if v else "Normal"

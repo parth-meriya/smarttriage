@@ -12,13 +12,17 @@ class Patient(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     initials = models.CharField(max_length=8, blank=True)
-    mrn = models.CharField(max_length=50, unique=True, help_text="Medical Record Number (e.g. ST-2048)")
+    mrn = models.CharField(max_length=50, unique=True, blank=True, help_text="Medical Record Number (e.g. ST-2048)")
     age = models.PositiveIntegerField()
     gender = models.CharField(max_length=20, choices=Gender.choices, default=Gender.MALE)
     date_of_birth = models.DateField(null=True, blank=True)
     phone = models.CharField(max_length=30, blank=True)
+    email = models.EmailField(blank=True)
     address = models.TextField(blank=True)
+    emergency_contact_name = models.CharField(max_length=150, blank=True)
+    emergency_contact_phone = models.CharField(max_length=50, blank=True)
     registered_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         ordering = ['-registered_at']
@@ -26,6 +30,9 @@ class Patient(models.Model):
     def save(self, *args, **kwargs):
         if not self.initials:
             self.initials = f"{self.first_name[:1]}{self.last_name[:1]}".upper()
+        if not self.mrn:
+            count = Patient.objects.count() + 1
+            self.mrn = f"ST-{2047 + count}"
         super().save(*args, **kwargs)
 
     @property

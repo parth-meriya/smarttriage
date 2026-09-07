@@ -34,6 +34,24 @@ export const triageApi = {
     return apiClient(`/triage/patients/${query}`);
   },
 
+  getPatient: async (patientId: number) => {
+    return apiClient(`/triage/patients/${patientId}/`);
+  },
+
+  createPatient: async (patientData: any) => {
+    return apiClient('/triage/patients/', {
+      method: 'POST',
+      body: JSON.stringify(patientData),
+    });
+  },
+
+  updatePatient: async (patientId: number, patientData: any) => {
+    return apiClient(`/triage/patients/${patientId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(patientData),
+    });
+  },
+
   getPatientHistory: async (patientId: number) => {
     return apiClient(`/triage/patients/${patientId}/history/`);
   },
