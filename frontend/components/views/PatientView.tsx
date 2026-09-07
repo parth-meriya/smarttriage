@@ -6,7 +6,6 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { InfoIcon } from '@/components/common/InfoIcon';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueue } from '@/hooks/useQueue';
-import { mockPatients } from '@/data/mockPatients';
 
 export function PatientView() {
   const { user } = useAuth();
@@ -14,7 +13,7 @@ export function PatientView() {
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
 
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Jamie';
+  const firstName = user?.first_name || (user?.display_name ? user.display_name.split(' ')[0] : 'Jamie');
   const initials = user?.initials || 'JS';
 
   // Match the patient's ticket if present in queue, or find Jamie or fallback to 4th patient
@@ -25,14 +24,34 @@ export function PatientView() {
         p.name.toLowerCase().includes('jamie')
     ) ||
     allPatients[3] ||
-    mockPatients[3];
+    null;
 
-  const queueIndex = allPatients.findIndex((p) => p.name === myPatient?.name);
-  const queuePosition = queueIndex !== -1 ? queueIndex + 1 : 4;
-  const totalWaiting = counts.total_waiting || allPatients.length || 12;
+  if (!myPatient) {
+    return (
+      <>
+        <div className="patient-welcome">
+          <div>
+            <div className="eyebrow">Northside Medical Center</div>
+            <h1>Hello, {firstName}</h1>
+            <p className="page-subtitle">Here is the latest update on your visit.</p>
+          </div>
+          <div className="patient-top-avatar">{initials}</div>
+        </div>
+        <section className="patient-status-card">
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+            <p>No active visit found. Please check in at the reception desk.</p>
+          </div>
+        </section>
+      </>
+    );
+  }
+
+  const queueIndex = allPatients.findIndex((p) => p.name === myPatient.name);
+  const queuePosition = queueIndex !== -1 ? queueIndex + 1 : 1;
+  const totalWaiting = counts.total_waiting || allPatients.length || 1;
   const estimatedWait = `~${queuePosition * 5} min`;
-  const visitId = myPatient?.mrn || 'ST-2048';
-  const currentStatus = myPatient?.status || 'Waiting';
+  const visitId = myPatient.mrn || 'ST-2048';
+  const currentStatus = myPatient.status || 'Waiting';
 
   const nextStep =
     currentStatus === 'In consultation'
@@ -117,15 +136,15 @@ export function PatientView() {
             <div style={{ marginTop: '12px', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--muted)' }}>Reported complaint:</span>
-                <strong>{myPatient?.complaint || 'Mild dizziness and headache'}</strong>
+                <strong>{myPatient.complaint || 'Mild dizziness and headache'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ color: 'var(--muted)' }}>Assigned room:</span>
-                <strong>{myPatient?.room || 'Waiting Area B'}</strong>
+                <strong>{myPatient.room || 'Waiting Area B'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--muted)' }}>Vitals recorded:</span>
-                <strong>{myPatient?.vital || 'SpO₂ 98% · HR 74'}</strong>
+                <strong>{myPatient.vital || 'SpO₂ 98% · HR 74'}</strong>
               </div>
             </div>
           )}
