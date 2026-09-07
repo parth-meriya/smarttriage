@@ -1,11 +1,22 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+
+def ws_queue_info(request):
+    return JsonResponse({
+        "status": "online",
+        "protocol": "WebSocket",
+        "uri": "ws://localhost:8000/ws/queue/",
+        "service": "SmartTriage Real-Time Queue Feed",
+        "description": "This endpoint accepts WebSocket connections. Connect using ws:// or wss:// protocol (e.g. from the Next.js application)."
+    })
 
 urlpatterns = [
     # Root redirects directly to interactive Swagger API documentation
     path('', RedirectView.as_view(url='/api/docs/', permanent=False), name='api-root-redirect'),
+    path('ws/queue/', ws_queue_info, name='ws-queue-info'),
 
     path('admin/', admin.site.urls),
 
