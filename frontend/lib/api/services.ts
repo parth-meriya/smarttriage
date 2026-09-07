@@ -7,6 +7,8 @@ import {
   VitalSignDto,
   AIAssessmentResponse,
   VisitDto,
+  ConsultationDto,
+  PatientHistoryResponse,
 } from './types';
 
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8001/api/v1';
@@ -119,5 +121,43 @@ export const triageApi = {
     });
     if (!response.ok) throw new Error('AI Assistant request failed');
     return response.json();
+  },
+
+  // Consultations
+  createConsultation: async (data: Partial<ConsultationDto>): Promise<ConsultationDto> => {
+    return apiClient<ConsultationDto>('/consultations/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  completeConsultation: async (
+    consultationId: number,
+    data: { diagnosis?: string; treatment_plan?: string; disposition?: string }
+  ): Promise<ConsultationDto> => {
+    return apiClient<ConsultationDto>(`/consultations/${consultationId}/complete/`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getConsultations: async (patientId?: number): Promise<ConsultationDto[]> => {
+    const query = patientId ? `?patient=${patientId}` : '';
+    return apiClient<ConsultationDto[]>(`/consultations/${query}`);
+  },
+
+  // Patient History (typed)
+  getPatientHistoryTyped: async (patientId: number): Promise<PatientHistoryResponse> => {
+    return apiClient<PatientHistoryResponse>(`/triage/patients/${patientId}/history/`);
+  },
+
+  // Triage assessments for a patient
+  getTriageAssessments: async (patientId: number): Promise<TriageAssessmentDto[]> => {
+    return apiClient<TriageAssessmentDto[]>(`/triage/assessments/?patient=${patientId}`);
+  },
+
+  // Vitals for a patient
+  getPatientVitals: async (patientId: number): Promise<VitalSignDto[]> => {
+    return apiClient<VitalSignDto[]>(`/triage/vitals/?patient=${patientId}`);
   },
 };
