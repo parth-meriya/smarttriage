@@ -1,10 +1,10 @@
-﻿import logging
+import logging
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
-from .models import QueueTicket, TriageAssessment, VitalSign
+from .models import QueueTicket, TriageAssessment, VitalSign, Visit
 
 logger = logging.getLogger(__name__)
 
@@ -67,3 +67,14 @@ def on_vital_sign_saved(sender, instance, created, **kwargs):
         "patient_id": instance.patient.id,
         "is_critical": instance.is_critical,
     })
+
+@receiver(post_save, sender=Visit)
+def on_visit_saved(sender, instance, created, **kwargs):
+    broadcast_message("queue_updated", {
+        "event": "visit_created" if created else "visit_updated",
+        "visit_id": instance.id,
+        "patient_id": instance.patient.id,
+        "status": instance.status,
+        "priority": instance.priority,
+    })
+
