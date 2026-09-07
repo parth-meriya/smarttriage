@@ -1,0 +1,1 @@
+"""SmartTriage Notifications App."""

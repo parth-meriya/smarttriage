@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'apps.triage',
     'apps.consultations',
     'apps.analytics',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [

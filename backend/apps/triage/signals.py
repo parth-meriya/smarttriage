@@ -37,13 +37,24 @@ def on_queue_ticket_saved(sender, instance, created, **kwargs):
     broadcast_message("queue_updated", data)
 
     if instance.priority == 1 and instance.status != QueueTicket.Status.COMPLETED:
+        complaint = instance.triage_assessment.primary_complaint if instance.triage_assessment else "Immediate clinical assessment required"
         broadcast_message("emergency_alert", {
             "ticket_id": instance.id,
             "patient_name": instance.patient.name,
-            "complaint": instance.triage_assessment.primary_complaint if instance.triage_assessment else "Emergency assessment",
+            "complaint": complaint,
             "priority": 1,
             "priority_label": "Emergency",
         })
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.create(
+                title=f"Emergency Alert: {instance.patient.name} (Level 1)",
+                message=f"{instance.patient.name} requires immediate emergency evaluation: {complaint}",
+                level=Notification.Level.CRITICAL,
+                action_url=f"/patients/{instance.patient.id}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to create emergency notification record: {e}")
 
 @receiver(post_delete, sender=QueueTicket)
 def on_queue_ticket_deleted(sender, instance, **kwargs):
