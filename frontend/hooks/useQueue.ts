@@ -54,6 +54,7 @@ export function ticketToPatient(t: QueueTicketDto): Patient {
 
 export function useQueue() {
   const { isAuthenticated } = useAuth();
+  const [allPatients, setAllPatients] = useState<Patient[]>(mockPatients);
   const [attentionPatients, setAttentionPatients] = useState<Patient[]>(mockPatients.slice(0, 2));
   const [waitingPatients, setWaitingPatients] = useState<Patient[]>(mockPatients.slice(2));
   const [counts, setCounts] = useState({
@@ -72,8 +73,26 @@ export function useQueue() {
     try {
       const data = await triageApi.getLiveQueue();
       if (data && data.attention && data.waiting) {
-        setAttentionPatients(data.attention.map(ticketToPatient));
-        setWaitingPatients(data.waiting.map(ticketToPatient));
+        const att = data.attention.map(ticketToPatient);
+        const wait = data.waiting.map(ticketToPatient);
+        setAttentionPatients(att);
+        setWaitingPatients(wait);
+
+        if (data.all && data.all.length > 0) {
+          setAllPatients(data.all.map(ticketToPatient));
+        } else {
+          const seen = new Set<string>();
+          const uniqueList: Patient[] = [];
+          for (const p of [...att, ...wait]) {
+            const key = p.mrn || p.name;
+            if (!seen.has(key)) {
+              seen.add(key);
+              uniqueList.push(p);
+            }
+          }
+          setAllPatients(uniqueList);
+        }
+
         setCounts(data.counts);
         setError(null);
       }
@@ -153,6 +172,7 @@ export function useQueue() {
   }, [fetchQueue, isAuthenticated, isLiveConnected]);
 
   return {
+    allPatients,
     attentionPatients,
     waitingPatients,
     counts,

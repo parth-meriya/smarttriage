@@ -62,8 +62,8 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
           </button>
         </div>
         <div className="attention-grid">
-          {attentionPatients.slice(0, 2).map((p) => (
-            <AttentionCard key={p.name} patient={p} onOpen={onOpenPatient} />
+          {attentionPatients.slice(0, 2).map((p, idx) => (
+            <AttentionCard key={p.id ? `att-${p.id}` : p.mrn ? `mrn-${p.mrn}` : `${p.name}-${idx}`} patient={p} onOpen={onOpenPatient} />
           ))}
         </div>
       </section>
@@ -91,8 +91,8 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
             <span>Status</span>
             <span />
           </div>
-          {waitingPatients.map((p) => (
-            <PatientRow key={p.name} patient={p} onOpen={onOpenPatient} />
+          {waitingPatients.map((p, idx) => (
+            <PatientRow key={p.id ? `row-${p.id}` : p.mrn ? `mrn-${p.mrn}` : `${p.name}-${idx}`} patient={p} onOpen={onOpenPatient} />
           ))}
         </div>
       </section>

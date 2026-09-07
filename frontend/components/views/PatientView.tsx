@@ -10,11 +10,10 @@ import { mockPatients } from '@/data/mockPatients';
 
 export function PatientView() {
   const { user } = useAuth();
-  const { attentionPatients, waitingPatients, counts } = useQueue();
+  const { allPatients, counts } = useQueue();
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
 
-  const allPatients = [...attentionPatients, ...waitingPatients];
   const firstName = user?.name ? user.name.split(' ')[0] : 'Jamie';
   const initials = user?.initials || 'JS';
 

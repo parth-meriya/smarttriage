@@ -79,8 +79,9 @@ class QueueViewSet(viewsets.ModelViewSet):
     def live_feed(self, request):
         """Returns categorized queue for Doctor and Nurse views."""
         active_tickets = self.get_queryset()
-        attention = active_tickets.filter(priority__in=[1, 2])[:4]
-        waiting = active_tickets.filter(priority__gte=2)
+        attention = active_tickets.filter(priority__in=[1, 2])[:2]
+        attention_ids = list(attention.values_list('id', flat=True))
+        waiting = active_tickets.exclude(id__in=attention_ids)
         serializer = self.get_serializer
 
         # Count metrics for operations

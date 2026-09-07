@@ -13,11 +13,10 @@ interface NurseViewProps {
 
 export function NurseView({ onOpenPatient }: NurseViewProps) {
   const { user } = useAuth();
-  const { attentionPatients, waitingPatients, counts } = useQueue();
+  const { allPatients, counts } = useQueue();
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const allPatients = [...attentionPatients, ...waitingPatients];
   const nextPatient = allPatients[0];
   const needingTriageCount = counts.emergency + counts.high_priority;
   const nurseName = user?.first_name || 'Jordan';
@@ -115,8 +114,8 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
               No patients match &quot;{searchQuery}&quot;.
             </div>
           ) : (
-            filteredPatients.map((p) => (
-              <div className="nurse-patient" key={p.name}>
+            filteredPatients.map((p, idx) => (
+              <div className="nurse-patient" key={p.id ? `patient-${p.id}` : p.mrn ? `mrn-${p.mrn}` : `${p.name}-${idx}`}>
                 <div className="avatar patient-avatar">{p.initials}</div>
                 <div className="nurse-name">
                   <strong>{p.name}</strong>
