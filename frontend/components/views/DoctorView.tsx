@@ -17,11 +17,15 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
 
   const topEmergencyPatient = attentionPatients[0];
 
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
   return (
     <>
       <div className="page-heading">
         <div>
-          <div className="eyebrow">Thursday, September 6, 2026 · 10:44 AM</div>
+          <div className="eyebrow">{dateStr} · {timeStr}</div>
           <h1>Who needs my attention?</h1>
           <p className="page-subtitle">Good morning, Dr. Rivera. Here is the current clinical priority.</p>
         </div>
