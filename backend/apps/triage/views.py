@@ -2,12 +2,13 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from .models import Patient, VitalSign, TriageAssessment, QueueTicket
+from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit
 from .serializers import (
     PatientSerializer,
     VitalSignSerializer,
     TriageAssessmentSerializer,
-    QueueTicketSerializer
+    QueueTicketSerializer,
+    VisitSerializer
 )
 from apps.accounts.permissions import IsClinicalStaff
 
@@ -118,4 +119,27 @@ class QueueViewSet(viewsets.ModelViewSet):
         ticket.status = QueueTicket.Status.COMPLETED
         ticket.completed_at = timezone.now()
         ticket.save()
+        if ticket.visit:
+            ticket.visit.status = Visit.Status.COMPLETED
+            ticket.visit.is_completed = True
+            ticket.visit.completed_at = timezone.now()
+            ticket.visit.save()
         return Response({'status': 'Ticket completed', 'id': ticket.id})
+
+
+class VisitViewSet(viewsets.ModelViewSet):
+    queryset = Visit.objects.all().select_related('patient', 'assigned_doctor')
+    serializer_class = VisitSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ['patient', 'status', 'priority', 'assigned_doctor', 'is_completed']
+    search_fields = ['visit_number', 'patient__first_name', 'patient__last_name', 'patient__mrn', 'chief_complaint']
+    ordering_fields = ['created_at', 'priority']
+
+    @action(detail=True, methods=['post'])
+    def complete_visit(self, request, pk=None):
+        visit = self.get_object()
+        visit.status = Visit.Status.COMPLETED
+        visit.is_completed = True
+        visit.completed_at = timezone.now()
+        visit.save()
+        return Response(self.get_serializer(visit).data)

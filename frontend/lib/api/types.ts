@@ -65,6 +65,23 @@ export interface QueueTicketDto {
   estimated_wait_minutes: number;
 }
 
+export interface VisitDto {
+  id: number;
+  visit_number: string;
+  patient: number;
+  patient_name: string;
+  patient_mrn: string;
+  chief_complaint: string;
+  status: string;
+  priority: PriorityLevel;
+  assigned_doctor?: number;
+  assigned_doctor_name?: string;
+  facility?: number;
+  is_completed: boolean;
+  created_at: string;
+  completed_at?: string;
+}
+
 export interface LiveQueueResponse {
   all: QueueTicketDto[];
   attention: QueueTicketDto[];

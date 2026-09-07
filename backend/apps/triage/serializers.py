@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Patient, VitalSign, TriageAssessment, QueueTicket
+from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit
 
 class VitalSignSerializer(serializers.ModelSerializer):
     display_vital = serializers.CharField(read_only=True)
@@ -89,3 +89,22 @@ class QueueTicketSerializer(serializers.ModelSerializer):
     def get_vital(self, obj):
         v = obj.patient.vital_signs.first()
         return v.display_vital if v else "Normal"
+
+
+class VisitSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source='patient.name', read_only=True)
+    patient_mrn = serializers.CharField(source='patient.mrn', read_only=True)
+    assigned_doctor_name = serializers.CharField(source='assigned_doctor.display_name', read_only=True)
+
+    class Meta:
+        model = Visit
+        fields = [
+            'id', 'visit_number', 'patient', 'patient_name', 'patient_mrn',
+            'chief_complaint', 'status', 'priority', 'assigned_doctor',
+            'assigned_doctor_name', 'facility', 'is_completed',
+            'created_at', 'completed_at'
+        ]
+        read_only_fields = ['id', 'visit_number', 'created_at', 'completed_at']
+        extra_kwargs = {
+            'visit_number': {'required': False}
+        }

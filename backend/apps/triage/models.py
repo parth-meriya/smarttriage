@@ -138,6 +138,50 @@ class TriageAssessment(models.Model):
         return f"Triage L{self.priority} for {self.patient.name}: {self.primary_complaint}"
 
 
+class Visit(models.Model):
+    class Status(models.TextChoices):
+        REGISTERED = 'Registered', 'Registered'
+        WAITING = 'Waiting', 'Waiting'
+        TRIAGE_IN_PROGRESS = 'Triage in progress', 'Triage in progress'
+        TRIAGE_COMPLETE = 'Triage complete', 'Triage complete'
+        IN_CONSULTATION = 'In consultation', 'In consultation'
+        COMPLETED = 'Completed', 'Completed'
+        CANCELLED = 'Cancelled', 'Cancelled'
+
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='visits')
+    visit_number = models.CharField(max_length=50, unique=True, blank=True, help_text="Visit Encounter ID (e.g. VIS-2048)")
+    chief_complaint = models.CharField(max_length=255, default="Pending triage assessment")
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.WAITING)
+    priority = models.IntegerField(choices=TriageAssessment.Priority.choices, default=TriageAssessment.Priority.LEVEL_4)
+    assigned_doctor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_visits'
+    )
+    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, related_name='visits', null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.visit_number:
+            count = Visit.objects.count() + 1
+            self.visit_number = f"VIS-{2047 + count}"
+        if self.status == self.Status.COMPLETED and not self.is_completed:
+            self.is_completed = True
+            if not self.completed_at:
+                self.completed_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.visit_number} - {self.patient.name} ({self.status})"
+
+
 class QueueTicket(models.Model):
     class Status(models.TextChoices):
         WAITING = 'Waiting', 'Waiting'
@@ -147,6 +191,7 @@ class QueueTicket(models.Model):
         COMPLETED = 'Completed', 'Completed'
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='queue_tickets')
+    visit = models.ForeignKey(Visit, on_delete=models.CASCADE, null=True, blank=True, related_name='queue_tickets')
     triage_assessment = models.OneToOneField(
         TriageAssessment,
         on_delete=models.SET_NULL,

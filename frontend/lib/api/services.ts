@@ -6,6 +6,7 @@ import {
   TriageAssessmentDto,
   VitalSignDto,
   AIAssessmentResponse,
+  VisitDto,
 } from './types';
 
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8001/api/v1';
@@ -54,6 +55,29 @@ export const triageApi = {
 
   getPatientHistory: async (patientId: number) => {
     return apiClient(`/triage/patients/${patientId}/history/`);
+  },
+
+  // Visits
+  getVisits: async (patientId?: number): Promise<VisitDto[]> => {
+    const query = patientId ? `?patient=${patientId}` : '';
+    return apiClient<VisitDto[]>(`/triage/visits/${query}`);
+  },
+
+  getVisit: async (visitId: number): Promise<VisitDto> => {
+    return apiClient<VisitDto>(`/triage/visits/${visitId}/`);
+  },
+
+  createVisit: async (data: Partial<VisitDto>): Promise<VisitDto> => {
+    return apiClient<VisitDto>('/triage/visits/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  completeVisit: async (visitId: number): Promise<VisitDto> => {
+    return apiClient<VisitDto>(`/triage/visits/${visitId}/complete_visit/`, {
+      method: 'POST',
+    });
   },
 
   // Vitals & Triage
