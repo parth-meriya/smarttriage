@@ -1,34 +1,45 @@
+'use client';
+
 import React from 'react';
 import { AlertCircle, Clock3, HeartPulse, Search, ShieldCheck } from 'lucide-react';
 import { Patient } from '@/types/triage';
-import { mockPatients } from '@/data/mockPatients';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
+import { useAuth } from '@/hooks/useAuth';
+import { useQueue } from '@/hooks/useQueue';
 
 interface NurseViewProps {
   onOpenPatient: (patient: Patient) => void;
 }
 
 export function NurseView({ onOpenPatient }: NurseViewProps) {
-  const nextPatient = mockPatients[0];
+  const { user } = useAuth();
+  const { attentionPatients, waitingPatients, counts } = useQueue();
+
+  const allPatients = [...attentionPatients, ...waitingPatients];
+  const nextPatient = allPatients[0];
+  const needingTriageCount = counts.emergency + counts.high_priority;
+  const nurseName = user?.first_name || 'Jordan';
 
   return (
     <>
       <div className="page-heading">
         <div>
           <div className="eyebrow">Thursday, September 6, 2026</div>
-          <h1>Good morning, Jordan</h1>
+          <h1>Good morning, {nurseName}</h1>
           <p className="page-subtitle">Here is what needs your attention first.</p>
         </div>
-        <button className="primary-action small" onClick={() => onOpenPatient(nextPatient)}>
-          Start next triage <span>→</span>
-        </button>
+        {nextPatient && (
+          <button className="primary-action small" onClick={() => onOpenPatient(nextPatient)}>
+            Start next triage <span>→</span>
+          </button>
+        )}
       </div>
 
       <div className="workflow-cards">
         <div className="workflow-card urgent">
           <AlertCircle size={18} />
           <div>
-            <strong>3 patients</strong>
+            <strong>{needingTriageCount} patients</strong>
             <span>Need triage</span>
           </div>
           <b>→</b>
@@ -44,7 +55,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
         <div className="workflow-card">
           <Clock3 size={18} />
           <div>
-            <strong>8 patients</strong>
+            <strong>{counts.total_waiting} patients</strong>
             <span>Waiting for care</span>
           </div>
           <b>→</b>
@@ -62,7 +73,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           </button>
         </div>
         <div className="nurse-list">
-          {mockPatients.slice(0, 4).map((p) => (
+          {allPatients.slice(0, 5).map((p) => (
             <div className="nurse-patient" key={p.name}>
               <div className="avatar patient-avatar">{p.initials}</div>
               <div className="nurse-name">

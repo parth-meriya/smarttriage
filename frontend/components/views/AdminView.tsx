@@ -1,20 +1,12 @@
+'use client';
+
 import React from 'react';
 import { CalendarDays, ChevronDown } from 'lucide-react';
+import { useOperations } from '@/hooks/useOperations';
 
 export function AdminView() {
-  const queueOverviewData: [string, string, string][] = [
-    ['Emergency', '1', 'red'],
-    ['High priority', '2', 'amber'],
-    ['Urgent', '5', 'gold'],
-    ['Non-urgent', '4', 'teal'],
-  ];
-
-  const recentActivityData: [string, string, string][] = [
-    ['10:42 AM', 'Triage completed', 'David Kim'],
-    ['10:39 AM', 'Vitals recorded', 'Eleanor Wright'],
-    ['10:35 AM', 'Patient registered', 'Aisha Patel'],
-    ['10:31 AM', 'Consultation started', 'Maria Santos'],
-  ];
+  const { metrics } = useOperations();
+  const ops = metrics.operations;
 
   return (
     <>
@@ -32,28 +24,28 @@ export function AdminView() {
       <div className="operations-grid">
         <div>
           <span>Arrivals</span>
-          <strong>24</strong>
-          <small>+4 from yesterday</small>
+          <strong>{ops.arrivals}</strong>
+          <small>{ops.arrivals_delta}</small>
         </div>
         <div>
           <span>Waiting</span>
-          <strong>12</strong>
-          <small>8 under 30 min</small>
+          <strong>{ops.waiting}</strong>
+          <small>{ops.waiting_subtext}</small>
         </div>
         <div>
           <span>In triage</span>
-          <strong>3</strong>
-          <small>2 nurses active</small>
+          <strong>{ops.in_triage}</strong>
+          <small>{ops.in_triage_subtext}</small>
         </div>
         <div>
           <span>With doctor</span>
-          <strong>5</strong>
-          <small>3 rooms occupied</small>
+          <strong>{ops.with_doctor}</strong>
+          <small>{ops.with_doctor_subtext}</small>
         </div>
         <div>
           <span>Completed</span>
-          <strong>18</strong>
-          <small>Today</small>
+          <strong>{ops.completed}</strong>
+          <small>{ops.completed_subtext}</small>
         </div>
       </div>
 
@@ -66,13 +58,13 @@ export function AdminView() {
             </div>
             <button className="text-button">View queue →</button>
           </div>
-          {queueOverviewData.map(([label, count, color]) => (
-            <div className="flow-row" key={label}>
-              <span className={`flow-dot ${color}`} />
-              <strong>{label}</strong>
-              <span className="flow-count">{count} patients</span>
+          {metrics.queue_overview.map((item) => (
+            <div className="flow-row" key={item.label}>
+              <span className={`flow-dot ${item.color}`} />
+              <strong>{item.label}</strong>
+              <span className="flow-count">{item.count} patients</span>
               <div className="flow-bar">
-                <i className={color} style={{ width: `${Number(count) * 15 + 10}%` }} />
+                <i className={item.color} style={{ width: `${Math.min(item.count * 15 + 10, 100)}%` }} />
               </div>
               <span className="flow-arrow">→</span>
             </div>
@@ -86,12 +78,12 @@ export function AdminView() {
               <p>Today&apos;s latest updates.</p>
             </div>
           </div>
-          {recentActivityData.map((a) => (
-            <div className="activity-row" key={a[0]}>
-              <span>{a[0]}</span>
+          {metrics.recent_activity.map((a) => (
+            <div className="activity-row" key={a.id}>
+              <span>{a.time_display}</span>
               <div>
-                <strong>{a[1]}</strong>
-                <small>{a[2]}</small>
+                <strong>{a.event_type}</strong>
+                <small>{a.patient_name}</small>
               </div>
             </div>
           ))}
