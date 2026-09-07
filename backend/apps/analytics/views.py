@@ -6,9 +6,10 @@ from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 from apps.triage.models import QueueTicket, Patient
 from apps.accounts.models import User
+from apps.accounts.permissions import IsClinicalStaff
 
 class OperationsMetricsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsClinicalStaff]
 
     def get(self, request):
         today = timezone.now().date()

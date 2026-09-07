@@ -5,11 +5,12 @@ from django.utils import timezone
 from .models import Consultation
 from .serializers import ConsultationSerializer
 from apps.triage.models import QueueTicket
+from apps.accounts.permissions import IsClinicalStaff
 
 class ConsultationViewSet(viewsets.ModelViewSet):
     queryset = Consultation.objects.all().select_related('patient', 'doctor')
     serializer_class = ConsultationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsClinicalStaff]
     filterset_fields = ['patient', 'doctor', 'disposition']
 
     def perform_create(self, serializer):

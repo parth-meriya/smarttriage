@@ -9,6 +9,7 @@ from .serializers import (
     TriageAssessmentSerializer,
     QueueTicketSerializer
 )
+from apps.accounts.permissions import IsClinicalStaff
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all().prefetch_related('vital_signs', 'triage_assessments')
@@ -34,7 +35,7 @@ class PatientViewSet(viewsets.ModelViewSet):
 class VitalSignViewSet(viewsets.ModelViewSet):
     queryset = VitalSign.objects.all()
     serializer_class = VitalSignSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsClinicalStaff]
     filterset_fields = ['patient', 'is_critical']
 
     def perform_create(self, serializer):
@@ -44,7 +45,7 @@ class VitalSignViewSet(viewsets.ModelViewSet):
 class TriageAssessmentViewSet(viewsets.ModelViewSet):
     queryset = TriageAssessment.objects.all()
     serializer_class = TriageAssessmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsClinicalStaff]
     filterset_fields = ['patient', 'priority']
 
     def perform_create(self, serializer):
