@@ -63,7 +63,9 @@ export function Assistant({ patient }: AssistantProps) {
         setTimestamp('Generated just now · AI Clinical Decision Support');
       }
     } catch {
-      // Retain fallback summary
+      setSummary(defaultSummary);
+      setRationale('Clinical assistant temporarily unavailable. Patient workflow and priority calculations continue as standard.');
+      setTimestamp('Standard protocol active · AI offline');
     } finally {
       setIsSummarizing(false);
     }
@@ -85,7 +87,7 @@ export function Assistant({ patient }: AssistantProps) {
         setChatAnswer(res.answer);
       }
     } catch {
-      setChatAnswer(`Clinical assessment for ${firstName}: evaluate presenting complaint and monitor vitals stability.`);
+      setChatAnswer(`Clinical assistant is temporarily unavailable. Please proceed with standard clinical review for ${firstName}. The patient workflow is not affected.`);
     } finally {
       setIsAsking(false);
     }

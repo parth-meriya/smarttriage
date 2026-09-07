@@ -27,6 +27,7 @@ class TriageAnalysisResponse(BaseModel):
     patient_summary: str
     urgency_rationale: str
     key_risk_factors: List[str] = []
+    guideline_citations: List[str] = []
     clinical_review_required: bool = True
     disclaimer: str = "AI-generated decision support. Clinical review required."
 
