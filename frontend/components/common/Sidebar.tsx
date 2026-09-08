@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import {
   ChevronDown,
@@ -15,14 +17,18 @@ import {
 } from 'lucide-react';
 import { Role } from '@/types/triage';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueue } from '@/hooks/useQueue';
 
 interface SidebarProps {
   role: Role;
   setRole: (role: Role) => void;
+  activeSection: string;
+  onSelectSection: (section: string) => void;
 }
 
-export function Sidebar({ role, setRole }: SidebarProps) {
+export function Sidebar({ role, setRole, activeSection, onSelectSection }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { counts } = useQueue();
 
   const links =
     role === 'Doctor'
@@ -85,23 +91,43 @@ export function Sidebar({ role, setRole }: SidebarProps) {
         <ChevronDown size={14} />
       </div>
       <nav className="side-nav">
-        {links.map(([label, Icon]: any, i) => (
-          <button key={label as string} className={`nav-item ${i === 0 ? 'active' : ''}`}>
-            <Icon size={18} />
-            <span>{label}</span>
-            {label === 'Queue' && <span className="nav-count">14</span>}
-          </button>
-        ))}
+        {links.map(([label, Icon]: any) => {
+          const isActive = activeSection === label;
+          return (
+            <button
+              key={label as string}
+              className={`nav-item ${isActive ? 'active' : ''}`}
+              onClick={() => onSelectSection(label)}
+              type="button"
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+              {label === 'Queue' && (
+                <span className="nav-count">{counts.total_waiting || 6}</span>
+              )}
+              {label === 'Triage' && (
+                <span className="nav-count" style={{ background: '#fef2f2', color: '#ef4444' }}>
+                  {counts.emergency + counts.high_priority}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
       <div className="side-bottom">
-        <button className="nav-item">
+        <button
+          className="nav-item"
+          onClick={() => alert('SmartTriage Emergency System v2.4 · Contact Clinical Engineering: ext 4402')}
+        >
           <ShieldCheck size={18} />
           <span>Help & safety</span>
         </button>
         <div className="user-mini">
           <div className="avatar">{avatarInitials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <strong>{displayName}</strong>
+            <strong style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {displayName}
+            </strong>
             <small>{role}</small>
           </div>
           <button
