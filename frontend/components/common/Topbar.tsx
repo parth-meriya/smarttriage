@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Menu, Search } from 'lucide-react';
+import { Bell, Menu, Search, LogOut } from 'lucide-react';
 import { Role } from '@/types/triage';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -9,7 +9,7 @@ interface TopbarProps {
 }
 
 export function Topbar({ role, onMenu }: TopbarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const avatarInitials =
     user?.initials ||
@@ -34,7 +34,27 @@ export function Topbar({ role, onMenu }: TopbarProps) {
           <Bell size={19} />
           <i />
         </button>
-        <div className="top-avatar">{avatarInitials}</div>
+        <div className="top-avatar" title={user?.display_name || role}>{avatarInitials}</div>
+        <button
+          onClick={logout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: '#fee2e2',
+            color: '#b91c1c',
+            border: '1px solid #fca5a5',
+            padding: '5px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer'
+          }}
+          title="Sign out to Login screen"
+        >
+          <LogOut size={14} />
+          <span>Sign Out</span>
+        </button>
       </div>
     </header>
   );

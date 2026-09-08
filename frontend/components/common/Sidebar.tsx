@@ -7,7 +7,7 @@ import {
   History,
   LayoutDashboard,
   ListFilter,
-  MoreHorizontal,
+  LogOut,
   Settings,
   ShieldCheck,
   UserRound,
@@ -22,7 +22,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ role, setRole }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const links =
     role === 'Doctor'
@@ -100,11 +100,25 @@ export function Sidebar({ role, setRole }: SidebarProps) {
         </button>
         <div className="user-mini">
           <div className="avatar">{avatarInitials}</div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <strong>{displayName}</strong>
             <small>{role}</small>
           </div>
-          <MoreHorizontal size={17} />
+          <button
+            onClick={logout}
+            style={{
+              background: 'transparent',
+              border: 0,
+              color: '#ef4444',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'grid',
+              placeItems: 'center'
+            }}
+            title="Sign out"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </aside>

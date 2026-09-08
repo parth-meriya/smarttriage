@@ -11,6 +11,14 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
+  register: (data: {
+    username: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    role?: UserRole;
+    phone_number?: string;
+  }) => Promise<void>;
   switchRole: (role: Role) => Promise<void>;
   logout: () => void;
 }
@@ -33,17 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRole(storedUser.role);
         setIsLoading(false);
       } else {
-        // Automatically sign in as default demo role (Doctor)
-        try {
-          const creds = DEMO_CREDENTIALS['Doctor'];
-          const resp = await authApi.login(creds);
-          setUser(resp.user);
-          setRole('Doctor');
-        } catch (err) {
-          console.warn('[SmartTriage Auth] Initial demo login fallback:', err);
-        } finally {
-          setIsLoading(false);
-        }
+        // No stored session – remain unauthenticated
+        setIsLoading(false);
       }
     };
 
@@ -54,6 +53,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const resp = await authApi.login({ username, password });
+      setUser(resp.user);
+      setRole(resp.user.role);
+    } catch (err) {
+      // Demo fallback: if backend is offline, enable one-tap demo login
+      const matchingRole = (Object.keys(DEMO_CREDENTIALS) as UserRole[]).find(
+        r => DEMO_CREDENTIALS[r].username.toLowerCase() === username.toLowerCase()
+      );
+      if (matchingRole) {
+        const fallbackUser: UserProfile = {
+          id: matchingRole === 'Doctor' ? '1' : matchingRole === 'Nurse' ? '2' : matchingRole === 'Admin' ? '3' : '4',
+          username: username,
+          first_name: matchingRole === 'Doctor' ? 'Alex' : matchingRole === 'Nurse' ? 'Jordan' : matchingRole === 'Admin' ? 'Sam' : 'Jamie',
+          last_name: matchingRole === 'Doctor' ? 'Rivera' : matchingRole === 'Nurse' ? 'Lee' : matchingRole === 'Admin' ? 'Morgan' : 'Smith',
+          role: matchingRole,
+          display_name: matchingRole === 'Doctor' ? 'Dr. Alex Rivera' : matchingRole === 'Nurse' ? 'Jordan Lee' : matchingRole === 'Admin' ? 'Sam Morgan' : 'Jamie Smith',
+          initials: matchingRole === 'Doctor' ? 'AR' : matchingRole === 'Nurse' ? 'JL' : matchingRole === 'Admin' ? 'SM' : 'JS'
+        };
+        setUser(fallbackUser);
+        setRole(matchingRole);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('smarttriage_user', JSON.stringify(fallbackUser));
+          localStorage.setItem('smarttriage_access_token', 'demo_token');
+        }
+      } else {
+        throw err;
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (data: {
+    username: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    role?: UserRole;
+    phone_number?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const resp = await authApi.register(data);
       setUser(resp.user);
       setRole(resp.user.role);
     } finally {
@@ -75,6 +116,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn(`[SmartTriage Auth] Failed to authenticate as ${newRole}, switching locally:`, err);
       setRole(newRole);
+      if (user) {
+        const updatedUser: UserProfile = {
+          ...user,
+          role: newRole as UserRole,
+          display_name: newRole === 'Doctor' ? 'Dr. Alex Rivera' : newRole === 'Nurse' ? 'Jordan Lee' : newRole === 'Admin' ? 'Sam Morgan' : 'Jamie Smith',
+          initials: newRole === 'Doctor' ? 'AR' : newRole === 'Nurse' ? 'JL' : newRole === 'Admin' ? 'SM' : 'JS'
+        };
+        setUser(updatedUser);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('smarttriage_user', JSON.stringify(updatedUser));
+        }
+      }
     } finally {
       setIsLoading(false);
     }
@@ -94,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        register,
         switchRole,
         logout,
       }}
