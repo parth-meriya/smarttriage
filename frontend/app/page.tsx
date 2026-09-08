@@ -167,34 +167,7 @@ export default function Page() {
       </div>
       <div className="main-shell">
         <Topbar role={role} onMenu={() => setMobileOpen(!mobileOpen)} />
-        <div className="role-switcher">
-          <span>Demo view</span>
-          {(['Doctor', 'Nurse', 'Admin', 'Patient'] as Role[]).map((r) => (
-            <button
-              className={role === r ? 'selected' : ''}
-              key={r}
-              onClick={() => handleRoleChange(r)}
-            >
-              {r}
-            </button>
-          ))}
-          <button
-            style={{
-              marginLeft: 'auto',
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#b91c1c',
-              borderRadius: '5px',
-              padding: '4px 9px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-            onClick={logout}
-            title="Sign out to Login screen"
-          >
-            Sign Out
-          </button>
-        </div>
+
         <main className="content">
           {selectedPatient && role !== 'Patient' ? renderPatientDetail() : renderCurrentView()}
         </main>
