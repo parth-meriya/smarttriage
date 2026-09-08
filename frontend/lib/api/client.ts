@@ -27,28 +27,38 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-  if (!response.ok) {
-    let errorData = null;
-    try {
-      errorData = await response.json();
-    } catch {
-      // response wasn't JSON
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errorData = null;
+      try {
+        errorData = await response.json();
+      } catch {
+        // response wasn't JSON
+      }
+      throw new ApiError(
+        errorData?.detail || `API request failed with status ${response.status}`,
+        response.status,
+        errorData
+      );
     }
-    throw new ApiError(
-      errorData?.detail || `API request failed with status ${response.status}`,
-      response.status,
-      errorData
-    );
-  }
 
-  if (response.status === 204) {
-    return {} as T;
-  }
+    if (response.status === 204) {
+      return {} as T;
+    }
 
-  return response.json() as Promise<T>;
+    return response.json() as Promise<T>;
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 }

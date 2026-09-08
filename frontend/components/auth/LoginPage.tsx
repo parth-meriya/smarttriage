@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { HeartPulse, Stethoscope, UserCheck, Shield, User, ArrowRight, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { HeartPulse, Stethoscope, UserCheck, Shield, User, ArrowRight, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { DEMO_CREDENTIALS } from '@/lib/api/auth';
 import { UserRole } from '@/lib/api/types';
@@ -51,23 +51,12 @@ export default function LoginPage({ onSwitch }: Props) {
   const [password, setPassword] = useState('DoctorPass123!');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<UserRole>('Doctor');
+  const [activeRole, setActiveRole] = useState<UserRole>('Doctor');
 
-  const handleOneTapLogin = async (role: UserRole) => {
-    setError(null);
-    try {
-      const creds = DEMO_CREDENTIALS[role];
-      setUsername(creds.username);
-      setPassword(creds.password);
-      setActiveTab(role);
-      await login(creds.username, creds.password);
-    } catch (err: any) {
-      setError(err?.message ?? `${role} login failed`);
-    }
-  };
-
+  // When clicking a user card: auto-fills credentials only, does NOT auto-login
   const handleSelectRole = (role: UserRole) => {
-    setActiveTab(role);
+    setActiveRole(role);
+    setError(null);
     const creds = DEMO_CREDENTIALS[role];
     setUsername(creds.username);
     setPassword(creds.password);
@@ -144,8 +133,8 @@ export default function LoginPage({ onSwitch }: Props) {
             </div>
           )}
 
-          {/* Quick One-Tap Demo Section */}
-          <div style={{ marginBottom: '24px' }}>
+          {/* Quick Demo Accounts Selection */}
+          <div style={{ marginBottom: '22px' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -159,7 +148,7 @@ export default function LoginPage({ onSwitch }: Props) {
                 letterSpacing: '0.05em',
                 color: '#64748b'
               }}>
-                One-Tap College Demo Login
+                Select Account (Auto-fills form)
               </span>
               <span style={{
                 fontSize: '11px',
@@ -169,7 +158,7 @@ export default function LoginPage({ onSwitch }: Props) {
                 borderRadius: '12px',
                 fontWeight: '600'
               }}>
-                Instant Access
+                Choose then Submit
               </span>
             </div>
 
@@ -180,13 +169,12 @@ export default function LoginPage({ onSwitch }: Props) {
             }}>
               {ROLES_INFO.map((item) => {
                 const IconComponent = item.icon;
-                const isSelected = activeTab === item.role;
+                const isSelected = activeRole === item.role;
                 return (
                   <button
                     key={item.role}
                     type="button"
-                    onClick={() => handleOneTapLogin(item.role)}
-                    disabled={isLoading}
+                    onClick={() => handleSelectRole(item.role)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -197,7 +185,8 @@ export default function LoginPage({ onSwitch }: Props) {
                       background: isSelected ? item.bg : '#f8fafc',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      position: 'relative'
                     }}
                   >
                     <div style={{
@@ -213,8 +202,9 @@ export default function LoginPage({ onSwitch }: Props) {
                       <IconComponent size={18} />
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b' }}>
-                        {item.role}
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>{item.role}</span>
+                        {isSelected && <Check size={14} color={item.color} />}
                       </div>
                       <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {item.name}
@@ -229,12 +219,12 @@ export default function LoginPage({ onSwitch }: Props) {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            margin: '20px 0',
+            margin: '18px 0',
             color: '#94a3b8',
             fontSize: '12px'
           }}>
             <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-            <span style={{ padding: '0 12px' }}>or sign in with credentials</span>
+            <span style={{ padding: '0 12px' }}>credentials</span>
             <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
           </div>
 
@@ -325,10 +315,11 @@ export default function LoginPage({ onSwitch }: Props) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                opacity: isLoading ? 0.7 : 1
+                opacity: isLoading ? 0.7 : 1,
+                transition: 'background 0.15s ease'
               }}
             >
-              <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
+              <span>{isLoading ? 'Signing In...' : `Sign In as ${activeRole}`}</span>
               <ArrowRight size={16} />
             </button>
           </form>

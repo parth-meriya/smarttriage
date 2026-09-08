@@ -30,7 +30,7 @@ const ROLE_DEFAULT_SECTIONS: Record<Role, string> = {
 };
 
 export default function Page() {
-  const { role, switchRole, isAuthenticated, isLoading, logout } = useAuth();
+  const { role, switchRole, isAuthenticated, isInitializing } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeSection, setActiveSection] = useState<string>(ROLE_DEFAULT_SECTIONS[role] || 'Command center');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -60,7 +60,8 @@ export default function Page() {
     setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
   };
 
-  if (isLoading) {
+  // Only show full-page loading during the initial local session check
+  if (isInitializing) {
     return <div className="loading">Loading…</div>;
   }
 
@@ -167,7 +168,6 @@ export default function Page() {
       </div>
       <div className="main-shell">
         <Topbar role={role} onMenu={() => setMobileOpen(!mobileOpen)} />
-
         <main className="content">
           {selectedPatient && role !== 'Patient' ? renderPatientDetail() : renderCurrentView()}
         </main>
