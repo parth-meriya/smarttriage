@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Role } from '@/types/triage';
 import { authApi, DEMO_CREDENTIALS } from '@/lib/api/auth';
 import { UserProfile, UserRole } from '@/lib/api/types';
+import { findStaffAccountByUsername } from '@/lib/api/staff';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -51,11 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
 
+    // 1. Check if username matches built-in demo credentials
     const matchingRole = (Object.keys(DEMO_CREDENTIALS) as UserRole[]).find(
       r => DEMO_CREDENTIALS[r].username.toLowerCase() === username.toLowerCase()
     );
 
-    // If demo credentials match, authenticate immediately (<10ms) without waiting on network
     if (matchingRole && DEMO_CREDENTIALS[matchingRole].password === password) {
       const demoUser: UserProfile = {
         id: matchingRole === 'Doctor' ? '1' : matchingRole === 'Nurse' ? '2' : matchingRole === 'Admin' ? '3' : '4',
@@ -73,11 +74,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('smarttriage_access_token', 'demo_token');
       }
       setIsLoading(false);
-      // Attempt backend sync in background
       authApi.login({ username, password }).catch(() => {});
       return;
     }
 
+    // 2. Check if username matches custom staff account (created by Admin or Doctor)
+    const customStaff = findStaffAccountByUsername(username);
+    if (customStaff) {
+      if (customStaff.password !== password) {
+        setIsLoading(false);
+        throw new Error('Invalid username or password');
+      }
+      const staffUser: UserProfile = {
+        id: customStaff.id,
+        username: customStaff.username,
+        first_name: customStaff.name.split(' ')[0],
+        last_name: customStaff.name.split(' ').slice(1).join(' ') || '',
+        role: customStaff.role as UserRole,
+        display_name: customStaff.name,
+        initials: customStaff.name.slice(0, 2).toUpperCase()
+      };
+      setUser(staffUser);
+      setRole(customStaff.role as Role);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smarttriage_user', JSON.stringify(staffUser));
+        localStorage.setItem('smarttriage_access_token', 'staff_token_' + customStaff.id);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // 3. Fallback to API login
     try {
       const resp = await authApi.login({ username, password });
       setUser(resp.user);

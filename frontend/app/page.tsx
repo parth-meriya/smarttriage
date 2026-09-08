@@ -82,6 +82,8 @@ export default function Page() {
           return <QueueManagementView role={role} onOpenPatient={handleOpenPatient} />;
         case 'Patients':
           return <PatientsDirectoryView role={role} onOpenPatient={handleOpenPatient} />;
+        case 'Staff & Nurses':
+          return <StaffRosterView userRole="Doctor" />;
         case 'History':
           return <HistoryView role={role} />;
         case 'Command center':
@@ -114,8 +116,9 @@ export default function Page() {
           return <PatientsDirectoryView role={role} onOpenPatient={handleOpenPatient} />;
         case 'Queue':
           return <QueueManagementView role={role} onOpenPatient={handleOpenPatient} />;
+        case 'Staff & Credentials':
         case 'Staff':
-          return <StaffRosterView />;
+          return <StaffRosterView userRole="Admin" />;
         case 'Settings':
           return <HospitalSettingsView />;
         case 'Operations':

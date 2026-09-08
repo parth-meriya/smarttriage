@@ -36,6 +36,7 @@ export function Sidebar({ role, setRole, activeSection, onSelectSection }: Sideb
           ['Command center', LayoutDashboard],
           ['Queue', ListFilter],
           ['Patients', Users],
+          ['Staff & Nurses', UserRound],
           ['History', History],
         ]
       : role === 'Nurse'
@@ -51,7 +52,7 @@ export function Sidebar({ role, setRole, activeSection, onSelectSection }: Sideb
           ['Operations', LayoutDashboard],
           ['Patients', Users],
           ['Queue', ListFilter],
-          ['Staff', UserRound],
+          ['Staff & Credentials', UserRound],
           ['Settings', Settings],
         ]
       : [
