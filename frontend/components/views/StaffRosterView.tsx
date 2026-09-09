@@ -40,7 +40,7 @@ export function StaffRosterView({ userRole = 'Admin' }: StaffRosterViewProps) {
 
   // Form states
   const [formName, setFormName] = useState('');
-  const [formRole, setFormRole] = useState<'Doctor' | 'Nurse' | 'Admin'>(isDoctor ? 'Nurse' : 'Doctor');
+  const [formRole, setFormRole] = useState<'Doctor' | 'Nurse'>(isDoctor ? 'Nurse' : 'Doctor');
   const [formTitle, setFormTitle] = useState(isDoctor ? 'Staff Triage Nurse' : 'Attending Physician');
   const [formUsername, setFormUsername] = useState('');
   const [formPassword, setFormPassword] = useState('');
@@ -121,7 +121,7 @@ export function StaffRosterView({ userRole = 'Admin' }: StaffRosterViewProps) {
           <p className="page-subtitle">
             {isDoctor
               ? 'Hospital physicians can create, issue, and delete Nurse login credentials.'
-              : 'Hospital administrators can create, issue, and delete Doctor, Nurse, and Admin credentials.'}
+              : 'Hospital administrators can create, issue, and delete Doctor and Nurse credentials.'}
           </p>
         </div>
         <button
@@ -375,15 +375,14 @@ export function StaffRosterView({ userRole = 'Admin' }: StaffRosterViewProps) {
                   <select
                     value={formRole}
                     onChange={(e) => {
-                      const r = e.target.value as 'Doctor' | 'Nurse' | 'Admin';
+                      const r = e.target.value as 'Doctor' | 'Nurse';
                       setFormRole(r);
-                      setFormTitle(r === 'Doctor' ? 'Attending Physician' : r === 'Nurse' ? 'Staff Triage Nurse' : 'Hospital Operations Admin');
+                      setFormTitle(r === 'Doctor' ? 'Attending Physician' : 'Staff Triage Nurse');
                     }}
                     style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px' }}
                   >
                     <option value="Doctor">Doctor (Physician)</option>
                     <option value="Nurse">Nurse (Triage Staff)</option>
-                    <option value="Admin">Hospital Administrator</option>
                   </select>
                 </div>
               )}
