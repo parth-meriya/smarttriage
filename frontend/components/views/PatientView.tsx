@@ -16,14 +16,16 @@ export function PatientView() {
   const firstName = user?.first_name || (user?.display_name ? user.display_name.split(' ')[0] : 'Jamie');
   const initials = user?.initials || 'JS';
 
-  // Match the patient's ticket if present in queue, or find Jamie or fallback to 4th patient
+  // Match the patient's ticket if present in queue by name, username, or MRN
   const myPatient =
     allPatients.find(
       (p) =>
-        p.name.toLowerCase().includes(firstName.toLowerCase()) ||
-        p.name.toLowerCase().includes('jamie')
+        (firstName && firstName.length > 1 && p.name.toLowerCase().includes(firstName.toLowerCase())) ||
+        (user?.last_name && user.last_name.length > 1 && p.name.toLowerCase().includes(user.last_name.toLowerCase())) ||
+        (user?.username && p.mrn && p.mrn.toLowerCase().includes(user.username.toLowerCase()))
     ) ||
-    allPatients[3] ||
+    allPatients.find((p) => p.name.toLowerCase().includes('jamie')) ||
+    allPatients[0] ||
     null;
 
   if (!myPatient) {
