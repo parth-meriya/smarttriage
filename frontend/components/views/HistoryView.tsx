@@ -93,7 +93,105 @@ const DEMO_COMPLETED_RECORDS: CompletedRecord[] = [
     disposition: 'Discharged Home',
     completedAt: 'Yesterday, 04:10 PM',
     notes: 'Irrigated and sutured with 4-0 Ethilon (4 simple interrupted sutures). Tetanus booster given.'
-  }
+  },
+  {
+    id: 'ENC-9007',
+    patientName: 'Grace Obinna',
+    mrn: 'MRN-91205',
+    age: 34,
+    gender: 'Female',
+    complaint: 'Severe lower back pain after lifting',
+    acuity: 'Level 3 - Urgent',
+    attendingDoctor: 'Dr. Elena Rostova',
+    triageNurse: 'Marcus Vance, BSN',
+    disposition: 'Discharged Home',
+    completedAt: 'Yesterday, 02:40 PM',
+    notes: 'Lumbar strain diagnosed. IM ketorolac administered with significant relief. Discharged with ibuprofen, muscle relaxant, and physiotherapy referral.'
+  },
+  {
+    id: 'ENC-9006',
+    patientName: 'Walter Fischer',
+    mrn: 'MRN-40398',
+    age: 74,
+    gender: 'Male',
+    complaint: 'Syncope with brief loss of consciousness',
+    acuity: 'Level 2 - High Priority',
+    attendingDoctor: 'Dr. Alex Rivera',
+    triageNurse: 'Jordan Lee, RN',
+    disposition: 'Admitted to Ward',
+    completedAt: 'Yesterday, 12:05 PM',
+    notes: 'ECG showed transient bradycardia. Troponin negative x2. Cardiology consult obtained; admitted for telemetry monitoring and echocardiogram.'
+  },
+  {
+    id: 'ENC-9005',
+    patientName: 'Lucia Fernandez',
+    mrn: 'MRN-72613',
+    age: 8,
+    gender: 'Female',
+    complaint: 'High fever (40.1°C) and febrile seizure',
+    acuity: 'Level 1 - Emergency',
+    attendingDoctor: 'Dr. Elena Rostova',
+    triageNurse: 'Jordan Lee, RN',
+    disposition: 'Observation',
+    completedAt: 'Yesterday, 10:20 AM',
+    notes: 'Single brief generalized tonic-clonic seizure lasting 90 seconds. Post-ictal recovery normal. Rectal diazepam given. Blood cultures drawn; started on IV antipyretics. Admitted to paediatric observation.'
+  },
+  {
+    id: 'ENC-9004',
+    patientName: 'Kevin Zhao',
+    mrn: 'MRN-33820',
+    age: 42,
+    gender: 'Male',
+    complaint: 'Chemical splash to both eyes',
+    acuity: 'Level 2 - High Priority',
+    attendingDoctor: 'Dr. Alex Rivera',
+    triageNurse: 'Marcus Vance, BSN',
+    disposition: 'Transferred',
+    completedAt: 'Sep 7, 08:55 PM',
+    notes: 'Morgan Lens irrigation for 30 minutes. pH normalized to 7.0. Slit lamp revealed bilateral corneal epithelial defects. Transferred to Regional Eye Center for ophthalmology admission.'
+  },
+  {
+    id: 'ENC-9003',
+    patientName: 'Sophie Moreau',
+    mrn: 'MRN-61425',
+    age: 26,
+    gender: 'Female',
+    complaint: 'Panic attack with hyperventilation',
+    acuity: 'Level 4 - Non-urgent',
+    attendingDoctor: 'Dr. Alex Rivera',
+    triageNurse: 'Jordan Lee, RN',
+    disposition: 'Discharged Home',
+    completedAt: 'Sep 7, 06:30 PM',
+    notes: 'ECG, troponin, and D-dimer all normal. Breathing exercises and reassurance provided. Discharged with referral to outpatient psychiatry and crisis helpline information.'
+  },
+  {
+    id: 'ENC-9002',
+    patientName: 'Omar Hadid',
+    mrn: 'MRN-49837',
+    age: 55,
+    gender: 'Male',
+    complaint: 'Diabetic foot ulcer with signs of infection',
+    acuity: 'Level 3 - Urgent',
+    attendingDoctor: 'Dr. Elena Rostova',
+    triageNurse: 'Marcus Vance, BSN',
+    disposition: 'Admitted to Ward',
+    completedAt: 'Sep 7, 03:15 PM',
+    notes: 'Wagner Grade 2 ulcer with surrounding cellulitis. Wound culture obtained. IV Augmentin started. Podiatry and endocrine consults requested. Admitted to Medicine ward.'
+  },
+  {
+    id: 'ENC-9001',
+    patientName: 'Irene Nakamura',
+    mrn: 'MRN-58291',
+    age: 38,
+    gender: 'Female',
+    complaint: 'Right-sided rib fractures after bicycle accident',
+    acuity: 'Level 3 - Urgent',
+    attendingDoctor: 'Dr. Alex Rivera',
+    triageNurse: 'Jordan Lee, RN',
+    disposition: 'Discharged Home',
+    completedAt: 'Sep 7, 01:45 PM',
+    notes: 'Chest X-ray: fractures of ribs 7-9 without pneumothorax. Intercostal nerve block provided. Pain controlled on oral oxycodone. Discharged with incentive spirometry instructions.'
+  },
 ];
 
 export function HistoryView({ role }: HistoryViewProps) {
@@ -161,7 +259,7 @@ export function HistoryView({ role }: HistoryViewProps) {
 
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Disposition:</span>
-          {['ALL', 'Discharged Home', 'Admitted to Ward', 'Observation'].map((disp) => (
+          {['ALL', 'Discharged Home', 'Admitted to Ward', 'Observation', 'Transferred'].map((disp) => (
             <button
               key={disp}
               onClick={() => setSelectedDisposition(disp)}
