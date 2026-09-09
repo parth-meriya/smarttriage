@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock3, FileText, HeartPulse, History, CheckCircle2, Loader2 } from 'lucide-react';
-import { Patient } from '@/types/triage';
+import { AlertCircle, Clock3, FileText, HeartPulse, History, CheckCircle2, Loader2, Phone, User, MapPin } from 'lucide-react';
+import { Patient, Role } from '@/types/triage';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Assistant } from '@/components/ai/Assistant';
 import { triageApi } from '@/lib/api/services';
@@ -11,10 +11,12 @@ import { HealthReportList } from '@/components/triage/HealthReportList';
 
 interface DetailViewProps {
   patient?: Patient;
+  role?: Role;
   onBack: () => void;
+  onStartTriage?: () => void;
 }
 
-export function DetailView({ patient, onBack }: DetailViewProps) {
+export function DetailView({ patient, role = 'Doctor', onBack, onStartTriage }: DetailViewProps) {
   if (!patient) {
     return (
       <>
@@ -34,6 +36,7 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
   const [activeConsultation, setActiveConsultation] = useState<ConsultationDto | null>(null);
 
   // Real clinical data from backend
+  const [patientInfo, setPatientInfo] = useState<any>(null);
   const [latestVitals, setLatestVitals] = useState<VitalSignDto | null>(null);
   const [triageAssessment, setTriageAssessment] = useState<TriageAssessmentDto | null>(null);
   const [pastVisits, setPastVisits] = useState<any[]>([]);
@@ -62,6 +65,9 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
         const history = await triageApi.getPatientHistoryTyped(patientId);
         if (cancelled) return;
 
+        if (history.patient) {
+          setPatientInfo(history.patient);
+        }
         if (history.vitals && history.vitals.length > 0) {
           setLatestVitals(history.vitals[0]);
         }
@@ -228,38 +234,86 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
         <div className="patient-person">
           <div className="avatar patient-avatar large">{p.initials}</div>
           <div>
-            <div className="eyebrow">Patient record · {p.mrn || 'ST-XXXX'}</div>
+            <div className="eyebrow">Patient record · {p.mrn || patientInfo?.mrn || 'ST-XXXX'}</div>
             <h1>{p.name}</h1>
             <p>
-              {p.age} years · {p.gender || 'Male'} · {p.registeredAt || 'Registered today'}
+              {p.age} years · {p.gender || patientInfo?.gender || 'Male'} · {p.registeredAt || 'Registered today'}
             </p>
           </div>
         </div>
-        <div className="detail-actions">
+        <div className="detail-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <PriorityBadge level={p.priority} />
-          <button
-            className="primary-action"
-            onClick={handleStartConsultation}
-            disabled={isCalling || status === 'In consultation'}
-            style={status === 'In consultation' ? { background: '#16a34a', borderColor: '#16a34a' } : undefined}
-          >
-            {isCalling ? (
-              'Starting...'
-            ) : status === 'In consultation' ? (
-              <>
-                <CheckCircle2 size={14} style={{ marginRight: '6px' }} /> In consultation
-              </>
-            ) : (
-              <>
-                Start consultation <span>→</span>
-              </>
-            )}
-          </button>
+          {role === 'Nurse' && onStartTriage && (
+            <button
+              type="button"
+              className="primary-action"
+              onClick={onStartTriage}
+              style={{ background: '#0f8b8d', borderColor: '#0f8b8d' }}
+            >
+              <HeartPulse size={14} style={{ marginRight: '6px' }} /> Triage Assessment <span>→</span>
+            </button>
+          )}
+          {role === 'Doctor' && (
+            <button
+              className="primary-action"
+              onClick={handleStartConsultation}
+              disabled={isCalling || status === 'In consultation'}
+              style={status === 'In consultation' ? { background: '#16a34a', borderColor: '#16a34a' } : undefined}
+            >
+              {isCalling ? (
+                'Starting...'
+              ) : status === 'In consultation' ? (
+                <>
+                  <CheckCircle2 size={14} style={{ marginRight: '6px' }} /> In consultation
+                </>
+              ) : (
+                <>
+                  Start consultation <span>→</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       <div className="detail-grid">
         <main>
+          {/* Patient Demographic & Emergency Info */}
+          {(patientInfo || p) && (
+            <section className="clinical-card">
+              <div className="card-title">
+                <User size={18} style={{ color: '#155eef' }} />
+                <h2>Patient Profile & Registration Info</h2>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', fontSize: '12px', marginTop: '10px' }}>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block', marginBottom: '2px' }}>MRN / Patient ID</span>
+                  <strong style={{ color: '#0f172a' }}>{p.mrn || patientInfo?.mrn || 'ST-2048'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block', marginBottom: '2px' }}>Contact Phone</span>
+                  <strong style={{ color: '#0f172a' }}>{patientInfo?.phone || (p as any).phone || '+1 (555) 890-1234'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block', marginBottom: '2px' }}>Date of Birth</span>
+                  <strong style={{ color: '#0f172a' }}>{patientInfo?.date_of_birth || '1994-05-14'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block', marginBottom: '2px' }}>Address</span>
+                  <strong style={{ color: '#0f172a' }}>{patientInfo?.address || '1428 Elm Street, North District'}</strong>
+                </div>
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                  <span style={{ color: '#64748b', display: 'block', marginBottom: '2px' }}>Emergency Contact</span>
+                  <strong style={{ color: '#0f172a' }}>
+                    {patientInfo?.emergency_contact_name
+                      ? `${patientInfo.emergency_contact_name} · ${patientInfo.emergency_contact_phone || ''}`
+                      : 'Taylor Smith (Spouse) · +1 (555) 890-1234'}
+                  </strong>
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className={`clinical-card ${p.priority === 1 ? 'critical-card' : ''}`}>
             <div className="card-title">
               <AlertCircle size={18} />

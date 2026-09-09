@@ -34,25 +34,30 @@ export default function Page() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeSection, setActiveSection] = useState<string>(ROLE_DEFAULT_SECTIONS[role] || 'Command center');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [detailMode, setDetailMode] = useState<'chart' | 'triage'>('chart');
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleOpenPatient = (patient: Patient) => {
+  const handleOpenPatient = (patient: Patient, mode: 'chart' | 'triage' = 'chart') => {
     setSelectedPatient(patient);
+    setDetailMode(mode);
   };
 
   const handleBack = () => {
     setSelectedPatient(null);
+    setDetailMode('chart');
   };
 
   const handleRoleChange = (newRole: Role) => {
     switchRole(newRole);
     setSelectedPatient(null);
+    setDetailMode('chart');
     setActiveSection(ROLE_DEFAULT_SECTIONS[newRole] || 'Command center');
   };
 
   const handleSelectSection = (section: string) => {
     setActiveSection(section);
     setSelectedPatient(null);
+    setDetailMode('chart');
     setMobileOpen(false);
   };
 
@@ -98,7 +103,7 @@ export default function Page() {
         case 'Patients':
           return <PatientsDirectoryView role={role} onOpenPatient={handleOpenPatient} />;
         case 'Triage':
-          return <TriageStationView onOpenPatient={handleOpenPatient} />;
+          return <TriageStationView onOpenPatient={(p) => handleOpenPatient(p, 'triage')} />;
         case 'Queue':
           return <QueueManagementView role={role} onOpenPatient={handleOpenPatient} />;
         case 'History':
@@ -147,7 +152,7 @@ export default function Page() {
 
   const renderPatientDetail = () => {
     if (!selectedPatient) return null;
-    if (role === 'Nurse') {
+    if (role === 'Nurse' && detailMode === 'triage') {
       return (
         <TriageWorkflow
           patient={selectedPatient}
@@ -156,7 +161,14 @@ export default function Page() {
         />
       );
     }
-    return <DetailView patient={selectedPatient} onBack={handleBack} />;
+    return (
+      <DetailView
+        patient={selectedPatient}
+        role={role}
+        onBack={handleBack}
+        onStartTriage={() => setDetailMode('triage')}
+      />
+    );
   };
 
   return (
