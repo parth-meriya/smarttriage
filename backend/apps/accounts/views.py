@@ -70,8 +70,8 @@ class UserRegistrationView(generics.CreateAPIView):
 
                 # Automatically create an active visit and queue ticket so the patient immediately reflects on Doctor and Nurse screens
                 facility, _ = Facility.objects.get_or_create(
-                    id=1,
-                    defaults={'name': 'Northside Medical Center', 'code': 'NMC-01'}
+                    code='NMC-01',
+                    defaults={'name': 'Northside Medical Center'}
                 )
                 active_visit = Visit.objects.filter(patient=patient, is_completed=False).first()
                 if not active_visit:

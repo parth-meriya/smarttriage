@@ -66,7 +66,7 @@ class PatientViewSet(viewsets.ModelViewSet):
 class VitalSignViewSet(viewsets.ModelViewSet):
     queryset = VitalSign.objects.all()
     serializer_class = VitalSignSerializer
-    permission_classes = [IsClinicalStaffOrPatient]
+    permission_classes = [IsClinicalStaff]
     filterset_fields = ['patient', 'is_critical']
 
     def perform_create(self, serializer):
@@ -143,7 +143,7 @@ class TriageAssessmentViewSet(viewsets.ModelViewSet):
         ticket = QueueTicket.objects.filter(patient=patient).exclude(status=QueueTicket.Status.COMPLETED).first()
         if not ticket:
             from apps.facilities.models import Facility
-            facility, _ = Facility.objects.get_or_create(id=1, defaults={'name': 'Northside Medical Center', 'code': 'NMC-01'})
+            facility, _ = Facility.objects.get_or_create(code='NMC-01', defaults={'name': 'Northside Medical Center'})
             QueueTicket.objects.create(
                 patient=patient,
                 visit=active_visit,
