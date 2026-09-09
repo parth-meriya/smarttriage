@@ -1,23 +1,45 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
-from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit
+from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit, HealthReport
 from .serializers import (
     PatientSerializer,
     VitalSignSerializer,
     TriageAssessmentSerializer,
     QueueTicketSerializer,
-    VisitSerializer
+    VisitSerializer,
+    HealthReportSerializer
 )
-from apps.accounts.permissions import IsClinicalStaff
+from apps.accounts.permissions import IsClinicalStaff, IsClinicalStaffOrPatient
 
 class PatientViewSet(viewsets.ModelViewSet):
-    queryset = Patient.objects.all().prefetch_related('vital_signs', 'triage_assessments')
+    queryset = Patient.objects.all().prefetch_related('vital_signs', 'triage_assessments', 'health_reports')
     serializer_class = PatientSerializer
     permission_classes = [permissions.IsAuthenticated]
     search_fields = ['first_name', 'last_name', 'mrn', 'phone']
     ordering_fields = ['registered_at', 'age']
+
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Returns the clinical patient record associated with the authenticated user."""
+        try:
+            if hasattr(request.user, 'patient_profile'):
+                patient = request.user.patient_profile
+            else:
+                # Fallback match by email or name
+                patient = Patient.objects.filter(
+                    email=request.user.email
+                ).first() or Patient.objects.filter(
+                    first_name=request.user.first_name,
+                    last_name=request.user.last_name
+                ).first()
+            if patient:
+                return Response(self.get_serializer(patient).data)
+        except Exception:
+            pass
+        return Response({'detail': 'No patient record found for this user.'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -25,18 +47,26 @@ class PatientViewSet(viewsets.ModelViewSet):
         vitals = VitalSignSerializer(patient.vital_signs.all(), many=True).data
         assessments = TriageAssessmentSerializer(patient.triage_assessments.all(), many=True).data
         tickets = QueueTicketSerializer(patient.queue_tickets.all(), many=True).data
+        reports = HealthReportSerializer(patient.health_reports.all(), many=True, context={'request': request}).data
         return Response({
-            'patient': PatientSerializer(patient).data,
+            'patient': PatientSerializer(patient, context={'request': request}).data,
             'vitals': vitals,
             'triage_history': assessments,
-            'visits': tickets
+            'visits': tickets,
+            'reports': reports
         })
+
+    @action(detail=True, methods=['get'])
+    def reports(self, request, pk=None):
+        patient = self.get_object()
+        reports = HealthReportSerializer(patient.health_reports.all(), many=True, context={'request': request}).data
+        return Response(reports)
 
 
 class VitalSignViewSet(viewsets.ModelViewSet):
     queryset = VitalSign.objects.all()
     serializer_class = VitalSignSerializer
-    permission_classes = [IsClinicalStaff]
+    permission_classes = [IsClinicalStaffOrPatient]
     filterset_fields = ['patient', 'is_critical']
 
     def perform_create(self, serializer):
@@ -49,7 +79,7 @@ from .questions import TRIAGE_QUESTIONS
 class TriageAssessmentViewSet(viewsets.ModelViewSet):
     queryset = TriageAssessment.objects.all()
     serializer_class = TriageAssessmentSerializer
-    permission_classes = [IsClinicalStaff]
+    permission_classes = [IsClinicalStaffOrPatient]
     filterset_fields = ['patient', 'priority']
 
     @action(detail=False, methods=['get'])
@@ -112,10 +142,12 @@ class TriageAssessmentViewSet(viewsets.ModelViewSet):
         # Update or create queue ticket
         ticket = QueueTicket.objects.filter(patient=patient).exclude(status=QueueTicket.Status.COMPLETED).first()
         if not ticket:
+            from apps.facilities.models import Facility
+            facility, _ = Facility.objects.get_or_create(id=1, defaults={'name': 'Northside Medical Center', 'code': 'NMC-01'})
             QueueTicket.objects.create(
                 patient=patient,
                 visit=active_visit,
-                facility_id=1,
+                facility=facility,
                 ticket_number=patient.mrn,
                 priority=priority,
                 status=QueueTicket.Status.TRIAGE_COMPLETE,
@@ -208,3 +240,27 @@ class VisitViewSet(viewsets.ModelViewSet):
         visit.completed_at = timezone.now()
         visit.save()
         return Response(self.get_serializer(visit).data)
+
+
+class HealthReportViewSet(viewsets.ModelViewSet):
+    queryset = HealthReport.objects.all().select_related('patient', 'uploaded_by', 'visit')
+    serializer_class = HealthReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    filterset_fields = ['patient', 'report_type', 'visit']
+    search_fields = ['title', 'description', 'patient__first_name', 'patient__last_name', 'patient__mrn']
+    ordering_fields = ['created_at', 'report_type']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # If the user is a patient, they can only view their own reports
+        if self.request.user.is_authenticated and getattr(self.request.user, 'role', None) == 'Patient':
+            patient = getattr(self.request.user, 'patient_profile', None)
+            if patient:
+                return qs.filter(patient=patient)
+            return qs.filter(patient__email=self.request.user.email)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
+

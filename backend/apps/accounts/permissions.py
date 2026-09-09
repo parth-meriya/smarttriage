@@ -28,3 +28,13 @@ class IsClinicalStaff(BasePermission):
             request.user.is_authenticated and
             request.user.role in ['Doctor', 'Nurse', 'Admin']
         )
+
+class IsClinicalStaffOrPatient(BasePermission):
+    """Allows access to Clinical Staff as well as Patients for self-triage/intake."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user and
+            request.user.is_authenticated and
+            request.user.role in ['Doctor', 'Nurse', 'Admin', 'Patient']
+        )
+

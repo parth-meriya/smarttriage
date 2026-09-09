@@ -9,6 +9,7 @@ import {
   VisitDto,
   ConsultationDto,
   PatientHistoryResponse,
+  HealthReportDto,
 } from './types';
 
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8001/api/v1';
@@ -160,4 +161,33 @@ export const triageApi = {
   getPatientVitals: async (patientId: number): Promise<VitalSignDto[]> => {
     return apiClient<VitalSignDto[]>(`/triage/vitals/?patient=${patientId}`);
   },
+
+  // Health Reports
+  getHealthReports: async (patientId?: number): Promise<HealthReportDto[]> => {
+    const query = patientId ? `?patient=${patientId}` : '';
+    return apiClient<HealthReportDto[]>(`/triage/reports/${query}`);
+  },
+
+  getPatientReports: async (patientId: number): Promise<HealthReportDto[]> => {
+    return apiClient<HealthReportDto[]>(`/triage/patients/${patientId}/reports/`);
+  },
+
+  uploadHealthReport: async (data: FormData): Promise<HealthReportDto> => {
+    return apiClient<HealthReportDto>('/triage/reports/', {
+      method: 'POST',
+      body: data,
+    });
+  },
+
+  createHealthReportJson: async (data: Partial<HealthReportDto>): Promise<HealthReportDto> => {
+    return apiClient<HealthReportDto>('/triage/reports/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getMyPatientProfile: async (): Promise<any> => {
+    return apiClient('/triage/patients/me/');
+  },
 };
+

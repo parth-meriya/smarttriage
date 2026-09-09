@@ -1,15 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, CheckCircle2, Clock3, Stethoscope, HeartPulse, ShieldCheck, MapPin } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueue } from '@/hooks/useQueue';
+import { triageApi } from '@/lib/api/services';
 
 export function PatientMyVisitView() {
   const { user } = useAuth();
   const { allPatients } = useQueue();
+  const [patientRecord, setPatientRecord] = useState<any>(null);
 
-  const patient = allPatients.find(p => p.name.toLowerCase().includes('jamie')) || allPatients[3] || allPatients[0];
+  useEffect(() => {
+    let cancelled = false;
+    triageApi.getMyPatientProfile().then(p => {
+      if (!cancelled && p) {
+        setPatientRecord(p);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const patient = patientRecord || allPatients.find(p => p.name.toLowerCase().includes('jamie')) || allPatients[3] || allPatients[0];
+  const vitals = patientRecord?.latest_vitals;
 
   return (
     <div>
@@ -79,19 +92,19 @@ export function PatientMyVisitView() {
             <div style={{ display: 'grid', gap: '8px', fontSize: '12px', color: '#475569' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
                 <span>Blood Pressure</span>
-                <strong>128/82 mmHg</strong>
+                <strong>{vitals?.bp_display || (vitals?.systolic_bp ? `${vitals.systolic_bp}/${vitals.diastolic_bp} mmHg` : '128/82 mmHg')}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
                 <span>Heart Rate</span>
-                <strong>76 bpm (Normal)</strong>
+                <strong>{vitals?.heart_rate ? `${vitals.heart_rate} bpm` : '76 bpm (Normal)'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
                 <span>Oxygen Saturation</span>
-                <strong>98% on Room Air</strong>
+                <strong>{vitals?.spo2 ? `${vitals.spo2}% on Room Air` : '98% on Room Air'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Temperature</span>
-                <strong>98.6°F</strong>
+                <strong>{vitals?.temperature ? `${vitals.temperature}°C` : '36.8°C'}</strong>
               </div>
             </div>
           </div>

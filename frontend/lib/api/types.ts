@@ -149,10 +149,28 @@ export interface ConsultationDto {
   disposition?: 'Discharged' | 'Admitted' | 'Observation' | 'Transferred';
 }
 
+export interface HealthReportDto {
+  id?: number;
+  patient: number;
+  patient_name?: string;
+  visit?: number;
+  uploaded_by?: number;
+  uploaded_by_name?: string;
+  report_type: 'Lab Result' | 'Imaging' | 'Prescription' | 'Discharge Summary' | 'Vitals Summary' | 'Clinical Note' | 'Other';
+  title: string;
+  description?: string;
+  file?: string | File | null;
+  file_url?: string;
+  notes?: string;
+  created_at?: string;
+}
+
 export interface PatientHistoryResponse {
   patient: any;
   vitals: VitalSignDto[];
   triage_history: TriageAssessmentDto[];
   visits: QueueTicketDto[];
+  reports?: HealthReportDto[];
 }
+
 

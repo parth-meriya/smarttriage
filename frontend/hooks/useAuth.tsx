@@ -20,6 +20,13 @@ interface AuthContextType {
     last_name: string;
     role?: UserRole;
     phone_number?: string;
+    age?: number;
+    gender?: string;
+    date_of_birth?: string;
+    address?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    complaint?: string;
   }) => Promise<void>;
   switchRole: (role: Role) => Promise<void>;
   logout: () => void;
@@ -150,6 +157,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     last_name: string;
     role?: UserRole;
     phone_number?: string;
+    age?: number;
+    gender?: string;
+    date_of_birth?: string;
+    address?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    complaint?: string;
   }) => {
     setIsLoading(true);
     try {

@@ -9,6 +9,15 @@ class Patient(models.Model):
         FEMALE = 'Female', 'Female'
         OTHER = 'Other', 'Other'
 
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='patient_profile',
+        help_text="Linked user account for patient self-service"
+    )
+
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     initials = models.CharField(max_length=8, blank=True)
@@ -223,3 +232,43 @@ class QueueTicket(models.Model):
 
     def __str__(self):
         return f"Ticket {self.ticket_number} - {self.patient.name} (L{self.priority} {self.status})"
+
+
+class HealthReport(models.Model):
+    class ReportType(models.TextChoices):
+        LAB_RESULT = 'Lab Result', 'Lab Result'
+        IMAGING = 'Imaging', 'Imaging'
+        PRESCRIPTION = 'Prescription', 'Prescription'
+        DISCHARGE_SUMMARY = 'Discharge Summary', 'Discharge Summary'
+        VITALS_SUMMARY = 'Vitals Summary', 'Vitals Summary'
+        CLINICAL_NOTE = 'Clinical Note', 'Clinical Note'
+        OTHER = 'Other', 'Other'
+
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='health_reports')
+    visit = models.ForeignKey(Visit, on_delete=models.SET_NULL, null=True, blank=True, related_name='health_reports')
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='uploaded_reports'
+    )
+    report_type = models.CharField(max_length=30, choices=ReportType.choices, default=ReportType.CLINICAL_NOTE)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    file = models.FileField(upload_to='health_reports/%Y/%m/', null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Clinical notes by nurse/doctor")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def uploaded_by_name(self):
+        if self.uploaded_by:
+            return self.uploaded_by.display_name
+        return 'Unknown'
+
+    def __str__(self):
+        return f"{self.title} - {self.patient.name} ({self.report_type})"
+

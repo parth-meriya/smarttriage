@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AlertCircle, Clock3, HeartPulse, Search, ShieldCheck, X } from 'lucide-react';
+import { AlertCircle, Clock3, HeartPulse, Search, ShieldCheck, X, UserPlus } from 'lucide-react';
 import { Patient } from '@/types/triage';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useQueue } from '@/hooks/useQueue';
+import { NurseAddPatientModal } from '@/components/triage/NurseAddPatientModal';
 
 interface NurseViewProps {
   onOpenPatient: (patient: Patient) => void;
@@ -16,6 +17,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
   const { allPatients, counts } = useQueue();
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
 
   const nextPatient = allPatients[0];
   const needingTriageCount = counts.emergency + counts.high_priority;
@@ -41,11 +43,34 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           <h1>Good morning, {nurseName}</h1>
           <p className="page-subtitle">Here is what needs your attention first.</p>
         </div>
-        {nextPatient && (
-          <button className="primary-action small" onClick={() => onOpenPatient(nextPatient)}>
-            Start next triage <span>→</span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="secondary-action small"
+            onClick={() => setIsAddPatientOpen(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              background: '#0f8b8d',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <UserPlus size={16} />
+            <span>Add Patient</span>
           </button>
-        )}
+          {nextPatient && (
+            <button className="primary-action small" onClick={() => onOpenPatient(nextPatient)}>
+              Start next triage <span>→</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="workflow-cards">
@@ -147,6 +172,14 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           </p>
         </div>
       </section>
+
+      <NurseAddPatientModal
+        isOpen={isAddPatientOpen}
+        onClose={() => setIsAddPatientOpen(false)}
+        onPatientAdded={(created) => {
+          // Optional callback
+        }}
+      />
     </>
   );
 }

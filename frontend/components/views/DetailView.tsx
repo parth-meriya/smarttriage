@@ -6,7 +6,8 @@ import { Patient } from '@/types/triage';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { Assistant } from '@/components/ai/Assistant';
 import { triageApi } from '@/lib/api/services';
-import { TriageAssessmentDto, VitalSignDto, ConsultationDto } from '@/lib/api/types';
+import { TriageAssessmentDto, VitalSignDto, ConsultationDto, HealthReportDto } from '@/lib/api/types';
+import { HealthReportList } from '@/components/triage/HealthReportList';
 
 interface DetailViewProps {
   patient?: Patient;
@@ -36,6 +37,7 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
   const [latestVitals, setLatestVitals] = useState<VitalSignDto | null>(null);
   const [triageAssessment, setTriageAssessment] = useState<TriageAssessmentDto | null>(null);
   const [pastVisits, setPastVisits] = useState<any[]>([]);
+  const [healthReports, setHealthReports] = useState<HealthReportDto[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   // Consultation form state
@@ -68,6 +70,16 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
         }
         if (history.visits) {
           setPastVisits(history.visits);
+        }
+        if (history.reports) {
+          setHealthReports(history.reports);
+        } else {
+          try {
+            const reps = await triageApi.getPatientReports(patientId);
+            if (!cancelled && reps) setHealthReports(reps);
+          } catch {
+            // ignore
+          }
         }
       } catch {
         // Graceful fallback — use data from the Patient prop
@@ -454,6 +466,19 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
               </div>
             </section>
           )}
+
+          {/* Health & Diagnostic Reports Section */}
+          <section className="clinical-card">
+            <HealthReportList
+              reports={healthReports}
+              patientId={patientId}
+              patientName={p.name}
+              canUpload={true}
+              onReportAdded={(newReport) => {
+                setHealthReports((prev) => [newReport, ...prev]);
+              }}
+            />
+          </section>
 
           <section className="clinical-card">
             <div className="card-title">

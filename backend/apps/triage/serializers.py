@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit
+from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit, HealthReport
 
 class VitalSignSerializer(serializers.ModelSerializer):
     display_vital = serializers.CharField(read_only=True)
@@ -28,24 +28,48 @@ class TriageAssessmentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+class HealthReportSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.CharField(read_only=True)
+    patient_name = serializers.CharField(source='patient.name', read_only=True)
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HealthReport
+        fields = [
+            'id', 'patient', 'patient_name', 'visit', 'uploaded_by', 'uploaded_by_name',
+            'report_type', 'title', 'description', 'file', 'file_url', 'notes', 'created_at'
+        ]
+        read_only_fields = ['id', 'uploaded_by', 'uploaded_by_name', 'patient_name', 'file_url', 'created_at']
+
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+
 from drf_spectacular.utils import extend_schema_field
 
 class PatientSerializer(serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     latest_vitals = serializers.SerializerMethodField()
     active_assessment = serializers.SerializerMethodField()
+    health_reports = HealthReportSerializer(many=True, read_only=True)
 
     class Meta:
         model = Patient
         fields = [
-            'id', 'first_name', 'last_name', 'name', 'initials', 'mrn',
+            'id', 'user', 'first_name', 'last_name', 'name', 'initials', 'mrn',
             'age', 'gender', 'date_of_birth', 'phone', 'email', 'address',
             'emergency_contact_name', 'emergency_contact_phone',
-            'registered_at', 'created_at', 'latest_vitals', 'active_assessment'
+            'registered_at', 'created_at', 'latest_vitals', 'active_assessment', 'health_reports'
         ]
-        read_only_fields = ['id', 'name', 'initials', 'registered_at', 'created_at']
+        read_only_fields = ['id', 'name', 'initials', 'registered_at', 'created_at', 'health_reports']
         extra_kwargs = {
-            'mrn': {'required': False}
+            'mrn': {'required': False},
+            'user': {'required': False, 'allow_null': True}
         }
 
     @extend_schema_field(VitalSignSerializer)

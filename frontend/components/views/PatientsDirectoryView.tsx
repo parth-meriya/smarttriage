@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Users, FileText, ChevronRight, Activity, Calendar, Phone } from 'lucide-react';
+import { Search, Users, FileText, ChevronRight, Activity, Calendar, Phone, UserPlus } from 'lucide-react';
 import { Role, Patient } from '@/types/triage';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { useQueue } from '@/hooks/useQueue';
+import { NurseAddPatientModal } from '@/components/triage/NurseAddPatientModal';
 
 interface PatientsDirectoryViewProps {
   role: Role;
@@ -15,6 +16,7 @@ interface PatientsDirectoryViewProps {
 export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectoryViewProps) {
   const { allPatients } = useQueue();
   const [search, setSearch] = useState('');
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
 
   const filtered = allPatients.filter(
     (p) =>
@@ -32,7 +34,29 @@ export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectory
           <h1>Patient Directory</h1>
           <p className="page-subtitle">Master roster of all registered and admitted emergency patients.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {role !== 'Patient' && (
+            <button
+              type="button"
+              onClick={() => setIsAddPatientOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                background: '#0f8b8d',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <UserPlus size={16} />
+              <span>Add Patient</span>
+            </button>
+          )}
           <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
             {allPatients.length} Active Records
           </span>
@@ -174,6 +198,16 @@ export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectory
           );
         })}
       </div>
+
+      <NurseAddPatientModal
+        isOpen={isAddPatientOpen}
+        onClose={() => setIsAddPatientOpen(false)}
+        onPatientAdded={(created) => {
+          if (created) {
+            onOpenPatient(created);
+          }
+        }}
+      />
     </div>
   );
 }
