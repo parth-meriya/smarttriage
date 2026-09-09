@@ -34,7 +34,7 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
   }
 
   const controller = new AbortController();
-  const timeoutMs = isFormData ? 15000 : 5000;
+  const timeoutMs = isFormData ? 30000 : 15000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -52,8 +52,18 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
       } catch {
         // response wasn't JSON
       }
+      
+      const errorMsg =
+        errorData?.detail ||
+        (typeof errorData === 'object' && errorData !== null
+          ? Object.entries(errorData)
+              .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(' ') : v}`)
+              .join(' | ')
+          : null) ||
+        `API request failed with status ${response.status}`;
+
       throw new ApiError(
-        errorData?.detail || `API request failed with status ${response.status}`,
+        errorMsg,
         response.status,
         errorData
       );
@@ -66,6 +76,10 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     return response.json() as Promise<T>;
   } catch (err: any) {
     clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new ApiError('Request timed out while connecting to the backend server.', 408);
+    }
     throw err;
   }
 }
+

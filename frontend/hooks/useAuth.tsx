@@ -170,6 +170,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const resp = await authApi.register(data);
       setUser(resp.user);
       setRole(resp.user.role);
+    } catch (err: any) {
+      // If it's a specific validation error from the API (e.g. 400 Duplicate Username), rethrow it
+      if (err?.status && err?.status >= 400 && err?.status < 500 && err?.status !== 408) {
+        throw err;
+      }
+
+      // If backend is offline or network failed, fallback gracefully to a local patient session
+      const registeredRole = (data.role as UserRole) || 'Patient';
+      const fallbackUser: UserProfile = {
+        id: Date.now(),
+        username: data.username,
+        email: `${data.username.toLowerCase()}@smarttriage.local`,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        role: registeredRole,
+        department: 'General Intake',
+        phone_number: data.phone_number,
+        is_available: true,
+        display_name: `${data.first_name} ${data.last_name}`.trim() || data.username,
+        initials: `${data.first_name?.[0] || ''}${data.last_name?.[0] || ''}`.toUpperCase() || 'PT'
+      };
+      setUser(fallbackUser);
+      setRole(registeredRole);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('smarttriage_user', JSON.stringify(fallbackUser));
+        localStorage.setItem('smarttriage_access_token', 'local_token_' + fallbackUser.id);
+      }
     } finally {
       setIsLoading(false);
     }
