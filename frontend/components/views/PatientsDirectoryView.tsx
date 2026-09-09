@@ -74,7 +74,7 @@ export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectory
       }}>
         {filtered.map((patient, idx) => {
           const initials = patient.initials || patient.name.slice(0, 2).toUpperCase();
-          const vitals = patient.vitals;
+          const vitals = (patient as any).vitals || (patient as any).vital;
 
           return (
             <div
@@ -108,7 +108,7 @@ export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectory
                       </span>
                     </div>
                   </div>
-                  <PriorityBadge priority={patient.priority} />
+                  <PriorityBadge level={patient.priority} />
                 </div>
 
                 <div style={{
@@ -152,7 +152,7 @@ export function PatientsDirectoryView({ role, onOpenPatient }: PatientsDirectory
                 paddingTop: '12px',
                 marginTop: '6px'
               }}>
-                <StatusBadge status={patient.status || 'Waiting'} />
+                <StatusBadge>{patient.status || 'Waiting'}</StatusBadge>
                 <button
                   style={{
                     background: 'transparent',

@@ -59,11 +59,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (matchingRole && DEMO_CREDENTIALS[matchingRole].password === password) {
       const demoUser: UserProfile = {
-        id: matchingRole === 'Doctor' ? '1' : matchingRole === 'Nurse' ? '2' : matchingRole === 'Admin' ? '3' : '4',
+        id: matchingRole === 'Doctor' ? 1 : matchingRole === 'Nurse' ? 2 : matchingRole === 'Admin' ? 3 : 4,
         username: username,
+        email: `${username.toLowerCase()}@smarttriage.local`,
         first_name: matchingRole === 'Doctor' ? 'Alex' : matchingRole === 'Nurse' ? 'Jordan' : matchingRole === 'Admin' ? 'Sam' : 'Jamie',
         last_name: matchingRole === 'Doctor' ? 'Rivera' : matchingRole === 'Nurse' ? 'Lee' : matchingRole === 'Admin' ? 'Morgan' : 'Smith',
         role: matchingRole,
+        department: matchingRole === 'Doctor' ? 'Emergency' : matchingRole === 'Nurse' ? 'Triage' : matchingRole === 'Admin' ? 'Administration' : 'General',
+        is_available: true,
         display_name: matchingRole === 'Doctor' ? 'Dr. Alex Rivera' : matchingRole === 'Nurse' ? 'Jordan Lee' : matchingRole === 'Admin' ? 'Sam Morgan' : 'Jamie Smith',
         initials: matchingRole === 'Doctor' ? 'AR' : matchingRole === 'Nurse' ? 'JL' : matchingRole === 'Admin' ? 'SM' : 'JS'
       };
@@ -86,11 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Invalid username or password');
       }
       const staffUser: UserProfile = {
-        id: customStaff.id,
+        id: Number(customStaff.id) || 100,
         username: customStaff.username,
+        email: `${customStaff.username.toLowerCase()}@smarttriage.local`,
         first_name: customStaff.name.split(' ')[0],
         last_name: customStaff.name.split(' ').slice(1).join(' ') || '',
         role: customStaff.role as UserRole,
+        department: 'General',
+        is_available: true,
         display_name: customStaff.name,
         initials: customStaff.name.slice(0, 2).toUpperCase()
       };
@@ -112,11 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       if (matchingRole) {
         const fallbackUser: UserProfile = {
-          id: matchingRole === 'Doctor' ? '1' : matchingRole === 'Nurse' ? '2' : matchingRole === 'Admin' ? '3' : '4',
+          id: matchingRole === 'Doctor' ? 1 : matchingRole === 'Nurse' ? 2 : matchingRole === 'Admin' ? 3 : 4,
           username: username,
+          email: `${username.toLowerCase()}@smarttriage.local`,
           first_name: matchingRole === 'Doctor' ? 'Alex' : matchingRole === 'Nurse' ? 'Jordan' : matchingRole === 'Admin' ? 'Sam' : 'Jamie',
           last_name: matchingRole === 'Doctor' ? 'Rivera' : matchingRole === 'Nurse' ? 'Lee' : matchingRole === 'Admin' ? 'Morgan' : 'Smith',
           role: matchingRole,
+          department: matchingRole === 'Doctor' ? 'Emergency' : matchingRole === 'Nurse' ? 'Triage' : matchingRole === 'Admin' ? 'Administration' : 'General',
+          is_available: true,
           display_name: matchingRole === 'Doctor' ? 'Dr. Alex Rivera' : matchingRole === 'Nurse' ? 'Jordan Lee' : matchingRole === 'Admin' ? 'Sam Morgan' : 'Jamie Smith',
           initials: matchingRole === 'Doctor' ? 'AR' : matchingRole === 'Nurse' ? 'JL' : matchingRole === 'Admin' ? 'SM' : 'JS'
         };

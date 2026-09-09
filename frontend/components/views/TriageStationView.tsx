@@ -15,7 +15,7 @@ export function TriageStationView({ onOpenPatient }: TriageStationViewProps) {
 
   // Patients that are unassessed or high priority
   const needingTriage = allPatients.filter(
-    (p) => !p.vitals || p.status === 'Needs triage' || p.priority === 'Level 1' || p.priority === 'Level 2' || p.priority === 'Emergency'
+    (p) => !(p as any).vitals || p.status === 'Needs triage' || p.priority === 1 || p.priority === 2 || (p.priority as any) === 'Level 1' || (p.priority as any) === 'Level 2' || (p.priority as any) === 'Emergency'
   );
 
   return (
@@ -74,7 +74,7 @@ export function TriageStationView({ onOpenPatient }: TriageStationViewProps) {
 
         <div style={{ display: 'grid', gap: '12px' }}>
           {allPatients.map((patient, idx) => {
-            const isUrgent = patient.priority === 'Level 1' || patient.priority === 'Emergency';
+            const isUrgent = patient.priority === 1 || (patient.priority as any) === 'Level 1' || (patient.priority as any) === 'Emergency';
             return (
               <div
                 key={patient.id || patient.mrn || idx}
@@ -110,13 +110,13 @@ export function TriageStationView({ onOpenPatient }: TriageStationViewProps) {
                     {patient.complaint}
                   </div>
                   <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: '#64748b', marginTop: '3px' }}>
-                    <span>Wait: <strong>{patient.wait_time || '8 min'}</strong></span>
-                    <span>Arrival: {patient.arrival_time || 'Just now'}</span>
+                    <span>Wait: <strong>{patient.wait || (patient as any).wait_time || '8 min'}</strong></span>
+                    <span>Arrival: {(patient as any).arrival_time || patient.registeredAt || 'Just now'}</span>
                   </div>
                 </div>
 
                 <div>
-                  <PriorityBadge priority={patient.priority} />
+                  <PriorityBadge level={patient.priority} />
                 </div>
 
                 <div>

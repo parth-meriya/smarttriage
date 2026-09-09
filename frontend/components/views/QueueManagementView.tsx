@@ -29,10 +29,10 @@ export function QueueManagementView({ role, onOpenPatient }: QueueManagementView
     // Priority filter
     const matchesPriority =
       priorityFilter === 'ALL' ||
-      (priorityFilter === '1' && (p.priority === 'Level 1' || p.priority === 'Emergency')) ||
-      (priorityFilter === '2' && (p.priority === 'Level 2' || p.priority === 'High Priority')) ||
-      (priorityFilter === '3' && (p.priority === 'Level 3' || p.priority === 'Urgent')) ||
-      (priorityFilter === '4_5' && (p.priority === 'Level 4' || p.priority === 'Level 5' || p.priority === 'Non-urgent'));
+      (priorityFilter === '1' && (p.priority === 1 || (p.priority as any) === 'Level 1' || (p.priority as any) === 'Emergency')) ||
+      (priorityFilter === '2' && (p.priority === 2 || (p.priority as any) === 'Level 2' || (p.priority as any) === 'High Priority')) ||
+      (priorityFilter === '3' && (p.priority === 3 || (p.priority as any) === 'Level 3' || (p.priority as any) === 'Urgent')) ||
+      (priorityFilter === '4_5' && (p.priority === 4 || (p.priority as any) === 'Level 4' || (p.priority as any) === 'Level 5' || (p.priority as any) === 'Non-urgent'));
 
     // Status filter
     const matchesStatus =
@@ -207,7 +207,7 @@ export function QueueManagementView({ role, onOpenPatient }: QueueManagementView
           </div>
         ) : (
           filtered.map((patient, idx) => {
-            const vitals = patient.vitals;
+            const vitals = (patient as any).vitals || (patient as any).vital;
             return (
               <div
                 key={patient.id || patient.mrn || idx}
@@ -232,12 +232,12 @@ export function QueueManagementView({ role, onOpenPatient }: QueueManagementView
                     {patient.complaint}
                   </div>
                   <span style={{ fontSize: '11px', color: '#64748b' }}>
-                    {patient.arrival_time ? `Arrived ${patient.arrival_time}` : 'Arrived recently'}
+                    {(patient as any).arrival_time ? `Arrived ${(patient as any).arrival_time}` : (patient.registeredAt ? `Arrived ${patient.registeredAt}` : 'Arrived recently')}
                   </span>
                 </div>
 
                 <div>
-                  <PriorityBadge priority={patient.priority} />
+                  <PriorityBadge level={patient.priority} />
                 </div>
 
                 <div>
@@ -254,11 +254,11 @@ export function QueueManagementView({ role, onOpenPatient }: QueueManagementView
 
                 <div className="wait">
                   <Clock3 size={13} />
-                  <span>{patient.wait_time || patient.waitTime || '12 min'}</span>
+                  <span>{patient.wait || (patient as any).wait_time || (patient as any).waitTime || '12 min'}</span>
                 </div>
 
                 <div>
-                  <StatusBadge status={patient.status || 'Waiting'} />
+                  <StatusBadge>{patient.status || 'Waiting'}</StatusBadge>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
