@@ -493,6 +493,29 @@ export function DetailView({ patient, onBack }: DetailViewProps) {
               </div>
             ))}
           </section>
+          {/* Export full health report */}
+          <button
+            className="primary-action small"
+            onClick={() => {
+              const report = {
+                patient: p,
+                vitals: latestVitals,
+                triageAssessment,
+                pastVisits,
+                consultation: consultationCompleted ? consultationData : null,
+              };
+              const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${p.name.replace(/\s+/g, '_')}_health_report.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            style={{ marginTop: '12px' }}
+          >
+            Download full health report
+          </button>
         </aside>
       </div>
     </>

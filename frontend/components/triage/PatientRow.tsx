@@ -34,9 +34,7 @@ export function PatientRow({ patient, onOpen }: PatientRowProps) {
         {patient.wait}
       </div>
       <StatusBadge>{patient.status}</StatusBadge>
-      <button className="row-action" onClick={() => onOpen(patient)}>
-        Open <span>→</span>
-      </button>
+      <button className="row-action" onClick={() => onOpen(patient)}>Full Report</button>
     </div>
   );
 }
