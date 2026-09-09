@@ -21,7 +21,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'smarttriage-dev-insecure-key-change-i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,backend').split(',')
+_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,backend')
+ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
+if '.vercel.app' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('.vercel.app')
 
 # Application definition
 INSTALLED_APPS = [
@@ -92,14 +95,19 @@ POSTGRES_DB = os.environ.get('POSTGRES_DB')
 if DATABASE_URL and 'postgres' in DATABASE_URL:
     import urllib.parse
     parsed = urllib.parse.urlparse(DATABASE_URL)
+    query_params = urllib.parse.parse_qs(parsed.query)
+    options = {}
+    if 'sslmode' in query_params:
+        options['sslmode'] = query_params['sslmode'][0]
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': parsed.path.lstrip('/'),
             'USER': parsed.username,
-            'PASSWORD': parsed.password,
+            'PASSWORD': urllib.parse.unquote(parsed.password) if parsed.password else None,
             'HOST': parsed.hostname,
             'PORT': parsed.port or 5432,
+            'OPTIONS': options,
         }
     }
 elif POSTGRES_DB and os.environ.get('POSTGRES_HOST'):
