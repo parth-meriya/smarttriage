@@ -2,8 +2,10 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.db import transaction
 from django.utils import timezone
 from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit, HealthReport
+from . import queue_service
 from .serializers import (
     PatientSerializer,
     VitalSignSerializer,
@@ -20,6 +22,17 @@ class PatientViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     search_fields = ['first_name', 'last_name', 'mrn', 'phone']
     ordering_fields = ['registered_at', 'age']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        # Patients can only access their own clinical record through the API.
+        if user.is_authenticated and getattr(user, 'role', None) == 'Patient':
+            patient = getattr(user, 'patient_profile', None)
+            if patient:
+                return qs.filter(pk=patient.pk)
+            return qs.filter(email=user.email)
+        return qs
 
     @action(detail=False, methods=['get'])
     def me(self, request):
@@ -139,26 +152,34 @@ class TriageAssessmentViewSet(viewsets.ModelViewSet):
             visit=active_visit
         )
 
-        # Update or create queue ticket
-        ticket = QueueTicket.objects.filter(patient=patient).exclude(status=QueueTicket.Status.COMPLETED).first()
-        if not ticket:
-            from apps.facilities.models import Facility
-            facility, _ = Facility.objects.get_or_create(code='NMC-01', defaults={'name': 'Northside Medical Center'})
-            QueueTicket.objects.create(
-                patient=patient,
-                visit=active_visit,
-                facility=facility,
-                ticket_number=patient.mrn,
-                priority=priority,
-                status=QueueTicket.Status.TRIAGE_COMPLETE,
-                triage_assessment=assessment
+        # Update or create queue ticket (guarded against duplicates under concurrency)
+        from django.db import transaction as db_transaction
+        with db_transaction.atomic():
+            ticket = (
+                QueueTicket.objects.select_for_update()
+                .filter(patient=patient)
+                .exclude(status=QueueTicket.Status.COMPLETED)
+                .first()
             )
-        else:
-            ticket.priority = priority
-            ticket.triage_assessment = assessment
-            ticket.visit = active_visit
-            ticket.status = QueueTicket.Status.TRIAGE_COMPLETE
-            ticket.save()
+            if not ticket:
+                from apps.facilities.models import Facility
+                facility, _ = Facility.objects.get_or_create(code='NMC-01', defaults={'name': 'Northside Medical Center'})
+                ticket = QueueTicket.objects.create(
+                    patient=patient,
+                    visit=active_visit,
+                    facility=facility,
+                    ticket_number=patient.mrn,
+                    priority=priority,
+                    status=QueueTicket.Status.TRIAGE_COMPLETE,
+                    triage_assessment=assessment
+                )
+            else:
+                ticket.priority = priority
+                ticket.triage_assessment = assessment
+                ticket.visit = active_visit
+                ticket.status = QueueTicket.Status.TRIAGE_COMPLETE
+                ticket.save()
+            queue_service.recalculate_estimates()
 
 
 class QueueViewSet(viewsets.ModelViewSet):
@@ -168,10 +189,29 @@ class QueueViewSet(viewsets.ModelViewSet):
     filterset_fields = ['priority', 'status', 'assigned_room']
     ordering_fields = ['priority', 'arrived_at', 'order']
 
+    def get_permissions(self):
+        """Only clinical/admin staff may mutate the queue; patients read their own state."""
+        if self.action in ['create', 'update', 'partial_update', 'destroy',
+                           'call_patient', 'complete']:
+            return [IsClinicalStaff()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        # Defense-in-depth: patients may only ever see their own queue tickets.
+        if user.is_authenticated and getattr(user, 'role', None) == 'Patient':
+            patient = getattr(user, 'patient_profile', None)
+            if patient:
+                return qs.filter(patient=patient)
+            return qs.filter(patient__email=user.email)
+        return qs
+
     @action(detail=False, methods=['get'])
     def live_feed(self, request):
-        """Returns categorized queue for Doctor and Nurse views."""
-        active_tickets = self.get_queryset()
+        """Categorized, priority-ordered queue for Doctor / Nurse / Admin views."""
+        # Priority order is enforced here (level, then FIFO arrival time)
+        active_tickets = self.get_queryset().order_by('priority', 'arrived_at', 'id')
         attention = active_tickets.filter(priority__in=[1, 2])[:2]
         attention_ids = list(attention.values_list('id', flat=True))
         waiting = active_tickets.exclude(id__in=attention_ids)
@@ -197,31 +237,113 @@ class QueueViewSet(viewsets.ModelViewSet):
             }
         })
 
+    @action(detail=False, methods=['get'])
+    def my_status(self, request):
+        """
+        Live queue state for the authenticated patient: triage level, position,
+        patients ahead, estimated wait, and status transitions.
+        """
+        patient = getattr(request.user, 'patient_profile', None)
+        if not patient:
+            patient = Patient.objects.filter(email=request.user.email).first()
+        ticket = QueueTicket.objects.filter(patient=patient).exclude(
+            status=QueueTicket.Status.COMPLETED
+        ).order_by('-arrived_at').first() if patient else None
+
+        if not ticket:
+            return Response({'detail': 'No active queue ticket found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = queue_service.serialize_queue_state(ticket)
+        data['next_step'] = {
+            QueueTicket.Status.WAITING: 'Waiting for Nurse Assessment',
+            QueueTicket.Status.TRIAGE_IN_PROGRESS: 'Nurse assessment in progress',
+            QueueTicket.Status.TRIAGE_COMPLETE: 'Waiting for Doctor',
+            QueueTicket.Status.IN_CONSULTATION: 'You are currently with the doctor',
+        }.get(ticket.status, 'Waiting')
+        if ticket.priority == 1 and ticket.status != QueueTicket.Status.IN_CONSULTATION:
+            data['banner'] = 'Emergency Priority – Doctor Attention Required'
+        elif ticket.status == QueueTicket.Status.TRIAGE_COMPLETE and data['patients_ahead'] == 0:
+            data['banner'] = 'Your turn is approaching – please proceed for doctor consultation.'
+        return Response(data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsClinicalStaff])
+    def next_patient(self, request):
+        """Backend-decided next eligible patient (priority queue, never FCFS)."""
+        ticket = queue_service.next_eligible_ticket()
+        if not ticket:
+            return Response({'detail': 'No patients waiting in the queue.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(queue_service.serialize_next_patient(ticket))
+
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def call_patient(self, request, pk=None):
+        """
+        Doctor starts treatment. Transactional + guarded so two doctors can never
+        take the same patient simultaneously.
+        """
         ticket = self.get_object()
+        if ticket.status == QueueTicket.Status.IN_CONSULTATION:
+            return Response(
+                {'detail': 'Patient is already in consultation.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if ticket.status == QueueTicket.Status.COMPLETED:
+            return Response(
+                {'detail': 'Cannot start treatment on a completed ticket.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Atomic guard: re-read status inside the transaction and verify it's
+        # still eligible, so two doctors calling simultaneously cannot both succeed.
+        ticket = QueueTicket.objects.select_for_update().get(pk=ticket.pk)
+        if ticket.status in (
+            QueueTicket.Status.IN_CONSULTATION,
+            QueueTicket.Status.COMPLETED,
+        ):
+            return Response(
+                {'detail': 'Patient is already in consultation or completed.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
         ticket.status = QueueTicket.Status.IN_CONSULTATION
         ticket.called_at = timezone.now()
-        ticket.save()
+        ticket.save(update_fields=['status', 'called_at'])
         if ticket.visit:
             ticket.visit.status = Visit.Status.IN_CONSULTATION
             if request.user.is_authenticated and getattr(request.user, 'role', None) == 'Doctor':
                 ticket.visit.assigned_doctor = request.user
             ticket.visit.save()
+        queue_service.recalculate_estimates()
         return Response(self.get_serializer(ticket).data)
 
     @action(detail=True, methods=['post'])
+    @transaction.atomic
     def complete(self, request, pk=None):
+        """
+        Doctor completes treatment. Transactional: removes the patient from the
+        active queue, advances the queue, and persists the next eligible patient.
+        """
         ticket = self.get_object()
+        if ticket.status == QueueTicket.Status.COMPLETED:
+            return Response({'detail': 'Ticket already completed.'}, status=status.HTTP_400_BAD_REQUEST)
+
         ticket.status = QueueTicket.Status.COMPLETED
         ticket.completed_at = timezone.now()
-        ticket.save()
+        ticket.save(update_fields=['status', 'completed_at'])
         if ticket.visit:
             ticket.visit.status = Visit.Status.COMPLETED
             ticket.visit.is_completed = True
             ticket.visit.completed_at = timezone.now()
             ticket.visit.save()
-        return Response({'status': 'Ticket completed', 'id': ticket.id})
+
+        queue_service.recalculate_estimates()
+        next_ticket = queue_service.next_eligible_ticket()
+        return Response({
+            'status': 'Ticket completed',
+            'id': ticket.id,
+            'next_patient': (
+                queue_service.serialize_next_patient(next_ticket) if next_ticket else None
+            ),
+        })
 
 
 class VisitViewSet(viewsets.ModelViewSet):

@@ -1,34 +1,43 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CalendarDays, ShieldCheck, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { CalendarDays, ShieldCheck, AlertCircle, ChevronRight, Info } from 'lucide-react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { InfoIcon } from '@/components/common/InfoIcon';
+import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { useAuth } from '@/hooks/useAuth';
-import { useQueue } from '@/hooks/useQueue';
+import { useMyQueue } from '@/hooks/useMyQueue';
 
 export function PatientView() {
   const { user } = useAuth();
-  const { allPatients, counts } = useQueue();
+  const { queueStatus, isLoading, isLiveConnected } = useMyQueue();
   const [showDetails, setShowDetails] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
 
-  const firstName = user?.first_name || (user?.display_name ? user.display_name.split(' ')[0] : 'Jamie');
-  const initials = user?.initials || 'JS';
+  const firstName = user?.first_name || (user?.display_name ? user.display_name.split(' ')[0] : 'there');
+  const initials = user?.initials || 'PT';
 
-  // Match the patient's ticket if present in queue by name, username, or MRN
-  const myPatient =
-    allPatients.find(
-      (p) =>
-        (firstName && firstName.length > 1 && p.name.toLowerCase().includes(firstName.toLowerCase())) ||
-        (user?.last_name && user.last_name.length > 1 && p.name.toLowerCase().includes(user.last_name.toLowerCase())) ||
-        (user?.username && p.mrn && p.mrn.toLowerCase().includes(user.username.toLowerCase()))
-    ) ||
-    allPatients.find((p) => p.name.toLowerCase().includes('jamie')) ||
-    allPatients[0] ||
-    null;
+  if (isLoading) {
+    return (
+      <>
+        <div className="patient-welcome">
+          <div>
+            <div className="eyebrow">Northside Medical Center</div>
+            <h1>Hello, {firstName}</h1>
+            <p className="page-subtitle">Loading your live queue status…</p>
+          </div>
+          <div className="patient-top-avatar">{initials}</div>
+        </div>
+        <section className="patient-status-card">
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+            <p>Fetching your current queue position…</p>
+          </div>
+        </section>
+      </>
+    );
+  }
 
-  if (!myPatient) {
+  if (!queueStatus) {
     return (
       <>
         <div className="patient-welcome">
@@ -48,21 +57,29 @@ export function PatientView() {
     );
   }
 
-  const queueIndex = allPatients.findIndex((p) => p.name === myPatient.name);
-  const queuePosition = queueIndex !== -1 ? queueIndex + 1 : 1;
-  const totalWaiting = counts.total_waiting || allPatients.length || 1;
-  const estimatedWait = `~${queuePosition * 5} min`;
-  const visitId = myPatient.mrn || 'ST-2048';
-  const currentStatus = myPatient.status || 'Waiting';
+  const s = queueStatus;
+  const isEmergency = s.priority === 1;
+  const inConsultation = s.status === 'In consultation';
+  const completed = s.status === 'Completed';
+  const awaitingNurse = s.status === 'Waiting' || s.status === 'Triage in progress';
 
-  const nextStep =
-    currentStatus === 'In consultation'
-      ? 'Doctor consultation in progress'
-      : currentStatus === 'Triage complete'
-      ? 'Doctor examination'
-      : currentStatus === 'Triage in progress'
-      ? 'Nurse clinical triage'
-      : 'Nurse assessment';
+  // All status copy comes from the backend's next_step / banner fields
+  const headline = inConsultation
+    ? 'You are currently with the doctor'
+    : isEmergency
+    ? 'Emergency Priority – Doctor Attention Required'
+    : awaitingNurse
+    ? 'Waiting for Nurse Assessment'
+    : s.banner || 'Waiting for Doctor';
+
+  const estimatedWait =
+    inConsultation
+      ? 'With doctor now'
+      : s.estimated_wait_minutes > 0
+      ? `${s.estimated_wait_minutes}–${s.estimated_wait_minutes + s.average_consultation_minutes} min (estimate)`
+      : awaitingNurse
+      ? 'Being assessed now'
+      : 'You are next – please proceed';
 
   return (
     <>
@@ -75,42 +92,74 @@ export function PatientView() {
         <div className="patient-top-avatar">{initials}</div>
       </div>
 
+      {isEmergency && !inConsultation && !completed && (
+        <div className="alert-strip" style={{ marginBottom: '16px' }}>
+          <AlertCircle size={19} />
+          <div>
+            <strong>Emergency Priority</strong>
+            <span>Doctor attention required. Clinical staff have been alerted.</span>
+          </div>
+        </div>
+      )}
+
       <section className="patient-status-card">
         <div className="status-card-top">
           <div>
             <span className="live-label">
               <span />
-              Current status
+              Current status · {isLiveConnected ? 'live' : 'auto-sync'}
             </span>
-            <h2>{currentStatus === 'In consultation' ? 'You are currently with a doctor' : 'Your visit is in progress'}</h2>
+            <h2>{headline}</h2>
           </div>
-          <StatusBadge>{currentStatus}</StatusBadge>
+          <StatusBadge>{s.status}</StatusBadge>
         </div>
 
-        <div className="queue-position">
-          <div>
-            <span>Your queue position</span>
-            <strong>{currentStatus === 'In consultation' ? 'Now' : queuePosition}</strong>
-            <small>
-              {currentStatus === 'In consultation'
-                ? 'Currently in examination'
-                : `of ${totalWaiting} patients waiting`}
-            </small>
+        {!inConsultation && !completed && !awaitingNurse && (
+          <div className="queue-position">
+            <div>
+              <span>Your queue position</span>
+              <strong>#{s.queue_position}</strong>
+              <small>{s.patients_ahead} patient{s.patients_ahead === 1 ? '' : 's'} before you</small>
+            </div>
+            <div className="position-divider" />
+            <div>
+              <span>Estimated wait</span>
+              <strong>{estimatedWait}</strong>
+              <small>Estimate only · not a guarantee</small>
+            </div>
           </div>
-          <div className="position-divider" />
-          <div>
-            <span>Estimated wait</span>
-            <strong>{currentStatus === 'In consultation' ? '0 min' : estimatedWait}</strong>
-            <small>Updated live · priority based</small>
+        )}
+
+        {awaitingNurse && (
+          <div className="queue-position">
+            <div>
+              <span>Step</span>
+              <strong>Nurse assessment</strong>
+              <small>Triage level will be assigned after assessment</small>
+            </div>
+            <div className="position-divider" />
+            <div>
+              <span>Checked in</span>
+              <strong>
+                {s.arrived_at
+                  ? new Date(s.arrived_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : 'Just now'}
+              </strong>
+              <small>A nurse will see you shortly</small>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="patient-instruction">
           <InfoIcon />
           <span>
-            {currentStatus === 'In consultation'
+            {inConsultation
               ? 'Your examination is underway. Please discuss all your symptoms with your physician.'
-              : 'Please remain available in the waiting area. We will call your name when it is time for your assessment.'}
+              : isEmergency
+              ? 'A clinical team has been notified and will attend to you immediately.'
+              : awaitingNurse
+              ? 'A nurse will assess your vital signs and assign your triage level. Please remain in the waiting area.'
+              : 'Please remain available in the waiting area. We will call you when the doctor is ready.'}
           </span>
         </div>
       </section>
@@ -123,38 +172,35 @@ export function PatientView() {
           </div>
           <div className="visit-line">
             <span>Visit ID</span>
-            <strong>{visitId}</strong>
+            <strong>{s.ticket_number}</strong>
+          </div>
+          <div className="visit-line">
+            <span>Triage level</span>
+            <PriorityBadge level={s.priority} />
           </div>
           <div className="visit-line">
             <span>Status</span>
-            <StatusBadge>{currentStatus}</StatusBadge>
+            <StatusBadge>{s.status}</StatusBadge>
           </div>
           <div className="visit-line">
             <span>Next step</span>
-            <strong>{nextStep}</strong>
+            <strong>{s.next_step || 'Waiting'}</strong>
           </div>
 
           {showDetails && (
             <div style={{ marginTop: '12px', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ color: 'var(--muted)' }}>Reported complaint:</span>
-                <strong>{myPatient.complaint || 'Mild dizziness and headache'}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ color: 'var(--muted)' }}>Assigned room:</span>
-                <strong>{myPatient.room || 'Waiting Area B'}</strong>
+                <span style={{ color: 'var(--muted)' }}>Average consultation time used:</span>
+                <strong>{s.average_consultation_minutes} min</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--muted)' }}>Vitals recorded:</span>
-                <strong>{myPatient.vital || 'SpO₂ 98% · HR 74'}</strong>
+                <span style={{ color: 'var(--muted)' }}>Queue last synced:</span>
+                <strong>{new Date().toLocaleTimeString()}</strong>
               </div>
             </div>
           )}
 
-          <button
-            className="secondary-action"
-            onClick={() => setShowDetails(!showDetails)}
-          >
+          <button className="secondary-action" onClick={() => setShowDetails(!showDetails)}>
             {showDetails ? 'Hide visit details' : 'View visit details'} <span>{showDetails ? '↑' : '→'}</span>
           </button>
         </section>
@@ -170,15 +216,19 @@ export function PatientView() {
 
           {showHelp && (
             <div style={{ margin: '10px 0', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--muted)' }}>
-              Emergency departments use the <strong>Manchester Triage System</strong> to prioritize patients based on medical urgency rather than arrival time. Life-threatening conditions are assessed immediately.
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <Info size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>
+                  Patients are seen by medical urgency (triage level), not arrival time. Within the
+                  same urgency level, patients are seen in arrival order. Waiting times shown are
+                  estimates calculated from the current queue.
+                </span>
+              </div>
             </div>
           )}
 
-          <button
-            className="secondary-action"
-            onClick={() => setShowHelp(!showHelp)}
-          >
-            {showHelp ? 'Close guide' : 'How triage works'} <span>{showHelp ? '↑' : '→'}</span>
+          <button className="secondary-action" onClick={() => setShowHelp(!showHelp)}>
+            {showHelp ? 'Close guide' : 'How the queue works'} <span>{showHelp ? '↑' : '→'}</span>
           </button>
         </section>
       </div>

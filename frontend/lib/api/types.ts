@@ -57,12 +57,53 @@ export interface QueueTicketDto {
   gender: string;
   complaint: string;
   priority: PriorityLevel;
+  priority_label?: string;
   vital: string;
   wait: string;
   status: string;
   room: string;
   arrived_at: string;
+  estimated_wait_minutes?: number;
+  queue_position?: number;
+  patients_ahead?: number;
+  called_at?: string | null;
+}
+
+/** Backend-computed live queue snapshot for the authenticated patient. */
+export interface MyQueueStatusDto {
+  ticket_id: number;
+  patient_id: number;
+  patient_name: string;
+  ticket_number: string;
+  priority: PriorityLevel;
+  status: string;
+  queue_position: number;
+  patients_ahead: number;
   estimated_wait_minutes: number;
+  average_consultation_minutes: number;
+  next_step?: string;
+  banner?: string;
+  arrived_at?: string;
+  called_at?: string | null;
+  completed_at?: string | null;
+}
+
+/** Backend-decided next eligible patient for the doctor. */
+export interface NextPatientDto {
+  ticket_id: number;
+  patient_id: number;
+  patient_name: string;
+  ticket_number: string;
+  priority: PriorityLevel;
+  status: string;
+  queue_position: number;
+  patients_ahead: number;
+  estimated_wait_minutes: number;
+  complaint?: string;
+  is_emergency?: boolean;
+  room?: string;
+  age?: number;
+  gender?: string;
 }
 
 export interface VisitDto {

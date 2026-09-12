@@ -239,3 +239,8 @@ CELERY_TIMEZONE = TIME_ZONE
 
 # AI Microservice URL
 AI_SERVICE_URL = os.environ.get('AI_SERVICE_URL', 'http://localhost:8001')
+
+# SmartTriage priority queue
+# Average doctor consultation time (minutes) used for estimated waiting times.
+# These are operational estimates only - never presented as a medical guarantee.
+AVERAGE_CONSULTATION_MINUTES = int(os.environ.get('AVERAGE_CONSULTATION_MINUTES', '15'))

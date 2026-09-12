@@ -10,14 +10,26 @@ import {
   ConsultationDto,
   PatientHistoryResponse,
   HealthReportDto,
+  MyQueueStatusDto,
+  NextPatientDto,
 } from './types';
 
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8001/api/v1';
 
 export const triageApi = {
-  // Live Queue
+  // Live Queue (staff only - backend filters patients to their own tickets)
   getLiveQueue: async (): Promise<LiveQueueResponse> => {
     return apiClient<LiveQueueResponse>('/triage/queue/live_feed/');
+  },
+
+  // Patient's own live queue state (position, patients ahead, estimate, banner)
+  getMyQueueStatus: async (): Promise<MyQueueStatusDto> => {
+    return apiClient<MyQueueStatusDto>('/triage/queue/my_status/');
+  },
+
+  // Backend-determined next eligible patient (priority queue order)
+  getNextPatient: async (): Promise<NextPatientDto> => {
+    return apiClient<NextPatientDto>('/triage/queue/next_patient/');
   },
 
   callPatient: async (ticketId: number): Promise<QueueTicketDto> => {
@@ -26,8 +38,8 @@ export const triageApi = {
     });
   },
 
-  completeTicket: async (ticketId: number): Promise<{ status: string }> => {
-    return apiClient<{ status: string }>(`/triage/queue/${ticketId}/complete/`, {
+  completeTicket: async (ticketId: number): Promise<{ status: string; next_patient?: NextPatientDto | null }> => {
+    return apiClient<{ status: string; next_patient?: NextPatientDto | null }>(`/triage/queue/${ticketId}/complete/`, {
       method: 'POST',
     });
   },

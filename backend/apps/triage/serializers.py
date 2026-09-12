@@ -1,5 +1,13 @@
 from rest_framework import serializers
 from .models import Patient, VitalSign, TriageAssessment, QueueTicket, Visit, HealthReport
+from .queue_service import (
+    estimated_wait_minutes,
+    get_average_consultation_minutes,
+    patients_ahead,
+    queue_position,
+)
+
+PRIORITY_LABELS = dict(TriageAssessment.Priority.choices)
 
 class VitalSignSerializer(serializers.ModelSerializer):
     display_vital = serializers.CharField(read_only=True)
@@ -93,14 +101,39 @@ class QueueTicketSerializer(serializers.ModelSerializer):
     vital = serializers.SerializerMethodField()
     wait = serializers.CharField(source='wait_time_display', read_only=True)
     room = serializers.CharField(source='assigned_room', read_only=True)
+    # Live priority-queue metadata (computed backend-side, never by the client)
+    queue_position = serializers.SerializerMethodField()
+    patients_ahead = serializers.SerializerMethodField()
+    estimated_wait_minutes = serializers.SerializerMethodField()
+    priority_label = serializers.SerializerMethodField()
 
     class Meta:
         model = QueueTicket
         fields = [
             'id', 'ticket_number', 'patient_id', 'name', 'initials', 'age', 'gender',
-            'complaint', 'priority', 'vital', 'wait', 'status', 'room',
-            'arrived_at', 'estimated_wait_minutes', 'called_at'
+            'complaint', 'priority', 'priority_label', 'vital', 'wait', 'status', 'room',
+            'arrived_at', 'estimated_wait_minutes', 'called_at',
+            'queue_position', 'patients_ahead'
         ]
+
+    def get_queue_position(self, obj):
+        if obj.status == QueueTicket.Status.COMPLETED:
+            return 0
+        return queue_position(obj)
+
+    def get_patients_ahead(self, obj):
+        if obj.status == QueueTicket.Status.COMPLETED:
+            return 0
+        return patients_ahead(obj)
+
+    def get_estimated_wait_minutes(self, obj):
+        if obj.status == QueueTicket.Status.COMPLETED:
+            return 0
+        return estimated_wait_minutes(obj)
+
+    @extend_schema_field(serializers.CharField)
+    def get_priority_label(self, obj):
+        return PRIORITY_LABELS.get(obj.priority, f"Level {obj.priority}")
 
     @extend_schema_field(serializers.CharField)
     def get_complaint(self, obj):

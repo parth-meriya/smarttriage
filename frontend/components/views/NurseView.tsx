@@ -19,9 +19,12 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
 
-  const nextPatient = allPatients[0];
-  const needingTriageCount = counts.emergency + counts.high_priority;
-  const nurseName = user?.first_name || 'Jordan';
+  // Patients still awaiting nurse assessment = pre-triage tickets ('Waiting').
+  // (counts.emergency/high_priority are *assessed* urgent patients, not unassessed ones.)
+  const unassessed = allPatients.filter((p) => p.status === 'Waiting');
+  const nextPatient = unassessed[0] || allPatients[0];
+  const needingTriageCount = unassessed.length;
+  const nurseName = user?.first_name || 'Nurse';
 
   const filteredPatients = searchQuery.trim()
     ? allPatients.filter(
@@ -30,6 +33,8 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           p.complaint.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (p.mrn && p.mrn.toLowerCase().includes(searchQuery.toLowerCase()))
       )
+    : unassessed.length > 0
+    ? unassessed
     : allPatients.slice(0, 5);
 
   const now = new Date();
@@ -78,7 +83,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           <AlertCircle size={18} />
           <div>
             <strong>{needingTriageCount} patients</strong>
-            <span>Need triage</span>
+            <span>Awaiting assessment</span>
           </div>
           <b>→</b>
         </div>
@@ -139,7 +144,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
         <div className="nurse-list">
           {filteredPatients.length === 0 ? (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
-              No patients match &quot;{searchQuery}&quot;.
+              {searchQuery ? `No patients match "${searchQuery}".` : 'No patients awaiting assessment. New registrations appear here automatically.'}
             </div>
           ) : (
             filteredPatients.map((p, idx) => (
