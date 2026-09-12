@@ -1,10 +1,11 @@
-# v0 sandbox internal files
+# Tool internal files
 __v0_runtime_loader.js
 __v0_devtools.tsx
 __v0_jsx-dev-runtime.ts
 .snowflake/
 .v0-trash/
 .vercel/
+.freebuff/
 
 # Environment variables & secrets
 .env
