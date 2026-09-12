@@ -127,13 +127,15 @@ export function DetailView({ patient, role = 'Doctor', onBack, onStartTriage }: 
     setIsCompleting(true);
     try {
       await triageApi.completeConsultation(activeConsultation.id, consultationData);
-      // Also complete the queue ticket
+      // Also complete the queue ticket. The backend may have already completed
+      // it via the consultation signal, in which case the ticket 404s from the
+      // completed-excluded queryset - that is success, not an error.
       if (p.id) {
-        await triageApi.completeTicket(p.id);
+        await triageApi.completeTicket(p.id).catch(() => undefined);
       }
       setConsultationCompleted(true);
     } catch {
-      // Show error state
+      // Leave the form open so the doctor can retry
     } finally {
       setIsCompleting(false);
     }
