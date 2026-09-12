@@ -29,7 +29,7 @@ export function PatientView() {
           <div className="patient-top-avatar">{initials}</div>
         </div>
         <section className="patient-status-card">
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
             <p>Fetching your current queue position…</p>
           </div>
         </section>
@@ -49,7 +49,7 @@ export function PatientView() {
           <div className="patient-top-avatar">{initials}</div>
         </div>
         <section className="patient-status-card">
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
             <p>No active visit found. Please check in at the reception desk.</p>
           </div>
         </section>
@@ -190,11 +190,11 @@ export function PatientView() {
           {showDetails && (
             <div style={{ marginTop: '12px', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ color: 'var(--muted)' }}>Average consultation time used:</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>Average consultation time used:</span>
                 <strong>{s.average_consultation_minutes} min</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--muted)' }}>Queue last synced:</span>
+                <span style={{ color: 'var(--muted-foreground)' }}>Queue last synced:</span>
                 <strong>{new Date().toLocaleTimeString()}</strong>
               </div>
             </div>
@@ -215,7 +215,7 @@ export function PatientView() {
           </p>
 
           {showHelp && (
-            <div style={{ margin: '10px 0', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--muted)' }}>
+            <div style={{ margin: '10px 0', padding: '10px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--muted-foreground)' }}>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                 <Info size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <span>

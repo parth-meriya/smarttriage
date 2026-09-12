@@ -21,7 +21,7 @@ export function DetailView({ patient, role = 'Doctor', onBack, onStartTriage }: 
     return (
       <>
         <button className="back-link" onClick={onBack}>← Back to command center</button>
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
           <p>No patient selected. Please select a patient from the queue.</p>
         </div>
       </>
@@ -386,7 +386,7 @@ export function DetailView({ patient, role = 'Doctor', onBack, onStartTriage }: 
               <h2>Triage responses</h2>
             </div>
             {isLoadingData ? (
-              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--muted)', fontSize: '12px' }}>
+              <div style={{ padding: '12px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '12px' }}>
                 <Loader2 size={16} className="animate-spin" style={{ display: 'inline-block', marginRight: '6px' }} />
                 Loading triage data...
               </div>

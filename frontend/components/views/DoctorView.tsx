@@ -116,7 +116,7 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
               <strong style={{ fontSize: '14px' }}>
                 Next patient: {nextPatient.patient_name} · L{nextPatient.priority}
               </strong>
-              <span style={{ display: 'block', fontSize: '12px', color: 'var(--muted)' }}>
+              <span style={{ display: 'block', fontSize: '12px', color: 'var(--muted-foreground)' }}>
                 {nextPatient.complaint} · position #{nextPatient.queue_position}
                 {nextPatient.queue_position > 1 ? ` · ${nextPatient.estimated_wait_minutes} min wait` : ' · ready now'}
               </span>
@@ -124,7 +124,7 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
           ) : (
             <div style={{ flex: 1 }}>
               <strong style={{ fontSize: '14px' }}>No patients waiting</strong>
-              <span style={{ display: 'block', fontSize: '12px', color: 'var(--muted)' }}>
+              <span style={{ display: 'block', fontSize: '12px', color: 'var(--muted-foreground)' }}>
                 The priority queue is empty.
               </span>
             </div>
@@ -159,7 +159,7 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
             <AttentionCard key={p.id ? `att-${p.id}` : p.mrn ? `mrn-${p.mrn}` : `${p.name}-${idx}`} patient={p} onOpen={onOpenPatient} />
           ))}
           {attentionPatients.length === 0 && (
-            <div style={{ padding: '20px', color: 'var(--muted)', fontSize: '13px' }}>
+            <div style={{ padding: '20px', color: 'var(--muted-foreground)', fontSize: '13px' }}>
               No L1/L2 patients waiting.
             </div>
           )}
@@ -193,7 +193,7 @@ export function DoctorView({ onOpenPatient }: DoctorViewProps) {
             <PatientRow key={p.id ? `row-${p.id}` : p.mrn ? `mrn-${p.mrn}` : `${p.name}-${idx}`} patient={p} onOpen={onOpenPatient} />
           ))}
           {waitingPatients.length === 0 && (
-            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '13px' }}>
               No additional patients in the queue.
             </div>
           )}

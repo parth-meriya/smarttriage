@@ -114,7 +114,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {showSearch ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fff', border: '1px solid var(--border)', borderRadius: '6px', padding: '4px 8px' }}>
-                <Search size={14} style={{ color: 'var(--muted)' }} />
+                <Search size={14} style={{ color: 'var(--muted-foreground)' }} />
                 <input
                   type="text"
                   placeholder="Filter by name, MRN, complaint..."
@@ -143,7 +143,7 @@ export function NurseView({ onOpenPatient }: NurseViewProps) {
         </div>
         <div className="nurse-list">
           {filteredPatients.length === 0 ? (
-            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '13px' }}>
               {searchQuery ? `No patients match "${searchQuery}".` : 'No patients awaiting assessment. New registrations appear here automatically.'}
             </div>
           ) : (

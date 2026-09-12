@@ -166,7 +166,7 @@ export function Topbar({ role, onMenu }: TopbarProps) {
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                      color: 'var(--muted)',
+                      color: 'var(--muted-foreground)',
                       padding: '4px',
                       borderRadius: '4px',
                       display: 'flex',
@@ -178,7 +178,7 @@ export function Topbar({ role, onMenu }: TopbarProps) {
               </div>
 
               {notifications.length === 0 ? (
-                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: '13px' }}>
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '13px' }}>
                   <Bell size={22} style={{ marginBottom: '8px', opacity: 0.5 }} />
                   <p>No notifications yet.</p>
                   <p style={{ fontSize: '11px', marginTop: '4px' }}>
