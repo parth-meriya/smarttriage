@@ -111,15 +111,25 @@ export function useQueue() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // The queue consumer authenticates via JWT in the query string.
+    // Demo/local placeholder tokens cannot authenticate, so skip the
+    // socket entirely and rely on the polling fallback below.
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('smarttriage_access_token') : null;
+    const hasRealToken = !!storedToken && !storedToken.startsWith('demo_token') && !storedToken.startsWith('local_token');
+
     const wsUrl =
       process.env.NEXT_PUBLIC_WS_URL ||
-      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8000/ws/queue/`;
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8000/ws/queue/${hasRealToken ? `?token=${encodeURIComponent(storedToken!)}` : ''}`;
 
     let ws: WebSocket | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
     let isMounted = true;
 
     function connect() {
+      if (!hasRealToken) {
+        if (isMounted) setIsLiveConnected(false);
+        return;
+      }
       try {
         ws = new WebSocket(wsUrl);
 
