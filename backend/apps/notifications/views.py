@@ -12,10 +12,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Return notifications targeted to this user or broadcast to all (user=None)
-        return Notification.objects.filter(
-            Q(user=user) | Q(user__isnull=True)
-        ).order_by('-created_at')
+        queryset = Notification.objects.filter(Q(user=user) | Q(user__isnull=True))
+        # Broadcasts (user=None) are meant for clinical staff only — patients
+        # must never see other patients' emergency alerts.
+        if getattr(user, 'role', None) == 'Patient':
+            queryset = queryset.filter(user=user)
+        return queryset.order_by('-created_at')
 
     @action(detail=True, methods=['post'])
     def mark_read(self, request, pk=None):

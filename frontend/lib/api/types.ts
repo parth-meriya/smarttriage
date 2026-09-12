@@ -1,6 +1,18 @@
 export type PriorityLevel = 1 | 2 | 3 | 4;
 export type UserRole = 'Doctor' | 'Nurse' | 'Admin' | 'Patient';
 
+export interface NotificationDto {
+  id: number;
+  user: number | null;
+  title: string;
+  message: string;
+  level: 'info' | 'warning' | 'critical';
+  is_read: boolean;
+  action_url: string;
+  created_at: string;
+  time_display?: string;
+}
+
 export interface UserProfile {
   id: number;
   username: string;

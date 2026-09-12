@@ -142,11 +142,14 @@ export function useQueue() {
             const payload = JSON.parse(event.data);
             if (payload.type === 'queue_updated') {
               fetchQueue();
+              // Queue events often accompany notification creation server-side
+              window.dispatchEvent(new CustomEvent('smarttriage:refresh-notifications'));
             } else if (payload.type === 'emergency_alert') {
               fetchQueue();
               if (isMounted) {
                 setEmergencyAlert(payload.data);
               }
+              window.dispatchEvent(new CustomEvent('smarttriage:refresh-notifications'));
             }
           } catch {
             // Ignore parse errors

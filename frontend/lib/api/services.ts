@@ -12,6 +12,7 @@ import {
   HealthReportDto,
   MyQueueStatusDto,
   NextPatientDto,
+  NotificationDto,
 } from './types';
 
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_SERVICE_URL || 'http://localhost:8001/api/v1';
@@ -200,6 +201,27 @@ export const triageApi = {
 
   getMyPatientProfile: async (): Promise<any> => {
     return apiClient('/triage/patients/me/');
+  },
+
+  // Notifications (backend NotificationViewSet: user-targeted + broadcasts)
+  getNotifications: async (): Promise<NotificationDto[]> => {
+    return apiClient<NotificationDto[]>('/notifications/');
+  },
+
+  getUnreadCount: async (): Promise<{ unread_count: number }> => {
+    return apiClient<{ unread_count: number }>('/notifications/unread_count/');
+  },
+
+  markNotificationRead: async (id: number): Promise<NotificationDto> => {
+    return apiClient<NotificationDto>(`/notifications/${id}/mark_read/`, {
+      method: 'POST',
+    });
+  },
+
+  markAllNotificationsRead: async (): Promise<{ status: string }> => {
+    return apiClient<{ status: string }>('/notifications/mark_all_read/', {
+      method: 'POST',
+    });
   },
 };
 

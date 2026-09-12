@@ -84,7 +84,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('smarttriage_access_token', 'demo_token');
       }
       setIsLoading(false);
-      authApi.login({ username, password }).catch(() => {});
+      authApi.login({ username, password })
+        .then((resp) => {
+          // Real JWT landed - replace the demo session and notify live hooks
+          // (notifications, WebSocket consumers) that auth material changed.
+          setUser(resp.user);
+          setRole(resp.user.role);
+          window.dispatchEvent(new CustomEvent('smarttriage:auth-refreshed'));
+        })
+        .catch(() => {});
       return;
     }
 

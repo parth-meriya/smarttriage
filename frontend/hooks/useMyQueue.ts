@@ -100,6 +100,7 @@ export function useMyQueue() {
               payload.type === 'queue_updated'
             ) {
               fetchStatus();
+              window.dispatchEvent(new CustomEvent('smarttriage:refresh-notifications'));
             }
           } catch {
             // Ignore malformed frames

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Role, Patient } from '@/types/triage';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/common/Sidebar';
@@ -60,6 +60,16 @@ export default function Page() {
     setDetailMode('chart');
     setMobileOpen(false);
   };
+
+  // Notification bell items dispatch this to jump to the relevant section
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const section = (e as CustomEvent<{ section: string }>).detail?.section;
+      if (section) handleSelectSection(section);
+    };
+    window.addEventListener('smarttriage:navigate', handler);
+    return () => window.removeEventListener('smarttriage:navigate', handler);
+  }, []);
 
   const handleAuthSwitch = () => {
     setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
